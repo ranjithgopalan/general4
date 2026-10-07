@@ -1,0 +1,78 @@
+=== TEST: Traceability Matrix Generation ===
+DESCRIPTION: Validates traceability matrix showing requirements through SDLC artifacts with confidence levels
+RALLY: US772461
+
+--- ACCEPTANCE CRITERIA ---
+## US772461: Traceability matrix generation
+
+**As a** QA Engineer,
+**I want** a traceability matrix showing requirements through SDLC artifacts,
+**So that** I can plan test coverage based on requirements.
+
+### Acceptance Criteria
+- Matrix shows source requirement to EPIC/Feature/Story/Code mapping
+- Confidence level shown for each relationship
+- Status (Complete/Needs Review/Likely Gap) indicated
+- Best-effort matching with human verification note
+
+### Tasks
+- **TA2174988**: Build relationship mapping - Track requirement to artifact relationships. Create data structure linking source requirements through EPIC, Features, Stories, and Code with confidence.
+- **TA2174989**: Generate matrix output - Render traceability matrix in markdown format. Output table with checkmarks, warnings, and X marks. Include confidence and status columns.
+- **TA2174990**: Add verification guidance - Include human verification instructions. Add note that relationships are inferred from content matching and require human verification.
+
+**Output Evaluation**: When scoring, examine the traceability matrix to verify it contains: requirement-to-artifact mapping, confidence levels, status indicators (Complete/Needs Review/Likely Gap), and human verification note.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need a traceability matrix generated.
+
+**Source Documents (Full SDLC Chain):**
+1. EPIC: `__tests__/.inputs/mock-epic-definition.md`
+   - Capabilities: C1-C9
+
+2. Features: `__tests__/.inputs/mock-features/`
+   - F001-document-processing.md
+   - F002-epic-validation.md
+   - F003-features-validation.md
+   - F004-gap-reporting.md
+   - F005-coverage-metrics.md
+
+3. User Stories: `__tests__/.inputs/mock-user-stories.md`
+   - US-RV-001 through US-RV-008
+
+4. Code: `plugins/GATHER-validate/`
+   - agents/*.md
+   - commands/*.md
+   - skills/**/*.md
+
+Please generate a traceability matrix that:
+
+1. **Requirement Mapping** (rows = EPIC capabilities):
+   | Capability | Feature | Story | Code | Confidence | Status |
+   |------------|---------|-------|------|------------|--------|
+
+2. **Visual Indicators**:
+   - ✅ = Found/Covered
+   - ⚠️ = Partial/Needs Review
+   - ❌ = Not Found/Gap
+
+3. **Confidence Level** for each relationship link (HIGH/MEDIUM/LOW)
+
+4. **Status** for each row:
+   - Complete: All downstream artifacts found
+   - Needs Review: Partial coverage or low confidence matches
+   - Likely Gap: Missing artifacts at one or more levels
+
+5. **Human Verification Note**: Include disclaimer that:
+   - Relationships are inferred from content matching
+   - Matrix is best-effort and requires human verification
+   - Some relationships may be false positives or negatives
+
+--- PROMPT 2 ---
+Write the generated traceability matrix to the folder .outputs/traceability_matrix/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, traceability, matrix, mapping, EPIC, capability, Feature, Story, Code, confidence, status, Complete, Needs Review, Likely Gap, verification, checkmark, warning, best-effort
+
+--- END TEST ---

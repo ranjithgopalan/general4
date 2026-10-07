@@ -1,0 +1,255 @@
+﻿# UW Credit Risk -- MINI WORKSPACE stage (PRD 8.2)
+#
+# Repeats ONCE PER EPIC. Ten EPICs means ten instances of this pipeline, each
+# scoped to its own workspace_id, all able to run concurrently (FR-P5).
+#
+# All eight personas are present in every instance. `inherited_inputs` lists what
+# this tier may read from the approved Global Workspace; a Mini Workspace may
+# never read a sibling EPIC's artefacts (FR-P4).
+#
+# Feature / User Story / Coverage Validation moved to the Global Workspace
+# (uw-cr-global G4–G6) so they run via the server-side LangGraph / Bedrock
+# worker instead of the Claude Code CLI. The global thread drives a per-EPIC
+# loop (open_minis → loop_head → G4 → G5 → G6 → loop_head) and only starts
+# Mini threads once all EPICs have passed Coverage. Mini threads therefore
+# start from LLD (M1).
+#
+# Tally for this tier: 4 Fits / 5 Changes / 0 Gaps (3 docs stages promoted).
+# Cost / harness controls (FR-020). Per stage:
+#   max_turns: N     agent turn cap for this stage (default FE_MAX_TURNS=120 is far
+#                    too generous -- documents 24-40, code 60). A run that hits its
+#                    cap is FAILED (error_code max_turns), never persisted as done.
+#   model: high      escalate to FE_MODEL_HIGH (Opus) for synthesis-heavy stages;
+#                    everything else runs FE_MODEL (Sonnet 4.6). Concrete ids allowed.
+#   effort:          clamped per model family (xhigh -> high on Sonnet 4.6).
+#
+
+name: uw-cr-mini
+title: UW Credit Risk -- Mini Workspace (per EPIC)
+description: >
+  LLD through to UAT and deploy, scoped to a single EPIC. Feature / User Story /
+  Coverage Validation are driven by the Global LangGraph thread (G4–G6) before
+  Mini threads start. Created automatically when the Global Workspace's EPIC set
+  is approved.
+tier: mini
+parent: uw-cr-global
+kb_application: UW Credit Risk
+
+# Approved Global-tier artefacts this tier consumes. Cross-checked against the
+# parent pipeline's `produces` at load time, so a typo here fails loudly.
+inherited_inputs:
+  - epic
+  - srd
+  - sdd
+  - nfr
+  - adr
+  - frd
+  - prd
+  - business-rules
+  - feature
+  - user-story
+  - coverage-report
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  # --- M1 -----------------------------------------------------------------
+  - key: lld
+    seq: 1
+    name: LLD and TDDs
+    agent_group: "Developer Agent"
+    deliverable: >
+      Feature-TDD, UI-TDD and Service-TDD for this EPIC's stories, targeting
+      Spring Boot rather than Lambda.
+    owner:
+      kind: plugin
+      plugin: AIDLC-design
+      skill: generate
+    status: changes
+    notes: >
+      `service-tdd-designer.md` is hard-locked to Lambda/DynamoDB/@inscore. The
+      new `springboot-tdd-designer` sits alongside it and the router dispatches
+      on target runtime, leaving the Lambda path intact.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [developer]
+    consumes: [user-story, sdd, nfr]
+    produces: [feature-tdd, ui-tdd, service-tdd]
+    target: docs
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    effort: high
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, mcp__kb__*]
+
+  # --- M2 (parallel with api-code) ----------------------------------------
+  - key: ui-code
+    seq: 2
+    parallel_group: code-gen
+    name: UI Code Generation
+    agent_group: "Developer Agent"
+    deliverable: >
+      Angular 18 components on Axis v18.0.32, targeting the generated Spring
+      OpenAPI contract.
+    owner:
+      kind: plugin
+      plugin: AIDLC-axis
+      skill: axis-implement
+    status: changes
+    notes: >
+      No axis agent couples to Lambda or API Gateway, so this is a base-URL
+      configuration change only. Keep DynamoDB out of the LLD: it is the only
+      trigger for the dynamic-UI path.
+    approval_persona: developer
+    artifact_tier: code
+    contributing_personas: [architect, tester]
+    consumes: [ui-tdd, user-story]
+    produces: [ui-source, ui-unit-tests]
+    target: ui
+    required_runner: cli
+    max_turns: 50
+    timeout_seconds: 1800
+    effort: high
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- M3 (parallel with ui-code, same seq 2) ------------------------------
+  - key: api-code
+    seq: 2
+    parallel_group: code-gen
+    name: API Code Generation
+    agent_group: "Developer Agent"
+    deliverable: >
+      Spring Boot services with the OpenAPI contract the UI generates against,
+      PLUS every asynchronous / integration band the domain pack declares for
+      this EPIC: SQS listeners + SNS publishers + SES notification templates
+      (`messaging`), Spring Batch jobs with EventBridge / S3-event schedules
+      (`batch`), the S3 document service (`documents`), report exports (`reports`),
+      Okta OIDC security with row-level scope (`rbac`), and the build / DevOps
+      config (pom, Dockerfile, Jenkinsfile -> ECR -> ECS). The
+      springboot-code-validator gate must PASS (rule compliance + domain-pack
+      coverage) before this stage is approvable.
+    owner:
+      kind: plugin
+      plugin: AIDLC-springboot
+      skill: implement
+    status: changes
+    notes: >
+      AIDLC-springboot v1.1.0: router loads workspaces/<project>/domain-pack.json
+      and dispatches rest/service/exception/security generators plus
+      messaging-generator, spring-batch-generator, document-storage-generator,
+      report-export-generator and build-config-generator whenever the pack has the
+      corresponding block; springboot-code-validator closes the stage. Application
+      specifics are configuration (domain pack), not prompt text.
+    approval_persona: developer
+    artifact_tier: code
+    contributing_personas: [architect, tester, devops]
+    consumes: [service-tdd, user-story]
+    produces: [api-source, api-openapi, api-messaging, api-batch, api-integration, build-config]
+    target: api
+    required_runner: cli
+    max_turns: 50
+    timeout_seconds: 1800
+    effort: high
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- M4 (db-integration promoted to EPIC Assembler; seq 3 now security-opa)
+  - key: security-opa
+    seq: 3
+    name: Security Review and OPA Policies
+    agent_group: "Developer Agent"
+    deliverable: >
+      Security review of this EPIC's generated code, plus Rego policies for its
+      business rules with tests above 90% coverage.
+    owner:
+      kind: plugin
+      plugin: AIDLC-security
+      skill: review
+    status: changes
+    notes: >
+      `dependency-security-reviewer` is npm-only and needs Maven/Gradle
+      discovery. AIDLC-opa hard-blocks without pom-schema.json, which the
+      schema snapshot now publishes. api-data-access removed from consumes —
+      DB Integration now runs in the EPIC Assembler (uw-cr-epic-assembler A2)
+      after all EPICs complete, so it is no longer available per-EPIC here.
+    approval_persona: devops
+    artifact_tier: release
+    contributing_personas: [architect, developer]
+    consumes: [api-source, ui-source, business-rules]
+    produces: [security-report, opa-policies]
+    target: policies
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Write, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- M5 (was seq 6; renumbered to 4) ------------------------------------
+  - key: api-test
+    seq: 4
+    name: API Testing
+    agent_group: "Unit Test Agent"
+    deliverable: JUnit 5, Mockito and MockMvc suites above 80% coverage.
+    owner:
+      kind: plugin
+      plugin: AIDLC-springboot
+      skill: test
+    status: changes
+    notes: >
+      Was a gap until 2026-08-18: `springboot-test-generator` exists in
+      AIDLC-springboot but had never run against generated Spring sources.
+      Runnable now so the flow completes end to end; its output is a first
+      test set for the tester persona to review, not a trusted suite.
+      api-data-access removed from consumes — DB Integration now runs in the
+      EPIC Assembler (uw-cr-epic-assembler A2) after all EPICs complete.
+    approval_persona: tester
+    artifact_tier: test
+    contributing_personas: [developer]
+    consumes: [api-source, service-tdd]
+    produces: [api-tests]
+    target: tests
+    required_runner: cli
+    max_turns: 50
+    timeout_seconds: 1800
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- M6 (was seq 7; renumbered to 5) ------------------------------------
+  - key: ui-smoke
+    seq: 5
+    name: UI Jasmine Test
+    agent_group: "Unit Test Agent"
+    deliverable: Jasmine unit-test suite and smoke profile over this EPIC's generated UI.
+    owner:
+      kind: plugin
+      plugin: AIDLC-axis
+      skill: axis-test
+    status: changes
+    notes: Jasmine and Jest are both supported; a named smoke profile is needed.
+    approval_persona: tester
+    artifact_tier: test
+    contributing_personas: [developer]
+    consumes: [ui-source, ui-tdd]
+    produces: [ui-smoke-results]
+    target: tests
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- M8 (ui-e2e) --------------------------------------------------------
+  # UI E2E Testing has been MOVED to the EPIC Assembler pipeline
+  # (uw-cr-epic-assembler.yaml). It now runs ONCE across all assembled EPIC
+  # branches after PR Merge, using the combined UI surface from all EPICs.
+  # Remove this comment block once uw-cr-epic-assembler.yaml is deployed.

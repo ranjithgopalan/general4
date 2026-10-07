@@ -1,0 +1,171 @@
+﻿﻿# UW Credit Risk -- ARCHITECTURE WORKSPACE (singleton per project)
+#
+# Runs ONCE per programme, triggered automatically when the Global Workspace's
+# FRD is approved. The Architecture Workspace is a singleton: exactly one per
+# programme (not per EPIC). Its outputs (ADR, NFR, SDD, SRD) are the foundation
+# that Global uses to decompose EPICs and that every Mini Workspace consumes for
+# LLD and code generation.
+#
+# Trigger: after G2 FRD is approved in the Global Workspace, arch_sync_gate_node
+# creates this workspace and parks the Global thread at status="pending_architecture"
+# until SRD is approved and this workspace closes.
+#
+# Runner: the Architect runs these stages on the laptop via Claude Code CLI +
+# the AIDLC-tech-architect plugin. On ECS the same stages run via the Bedrock
+# runner (FE_RUNNER governs which path executes).
+#
+# Visibility: Global and Mini workspaces can read this workspace's approved
+# artefacts via readable_workspace_ids() (FR-P4 extended for three tiers).
+
+name: uw-cr-architecture
+title: UW Credit Risk -- Architecture Workspace
+description: >
+  Singleton architecture workspace: ADR -> NFR -> SDD -> SRD. Runs after FRD is
+  approved and before EPICs are created. The Architect owns all four stages.
+  Closing the workspace (SRD approved) resumes the Global thread.
+tier: architecture
+parent: uw-cr-global
+arch_after: frd                        # Global inserts arch_sync_gate after this stage key
+kb_application: UW Credit Risk
+
+# Approved Global-tier artefacts this workspace may read. Cross-checked against
+# the parent pipeline's `produces` at load time.
+inherited_inputs:
+  - frd
+  - prd
+  - business-rules
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  # --- A1 -----------------------------------------------------------------
+  - key: adr
+    seq: 1
+    name: Architecture Decision Records
+    agent_group: "Architecture Agent"
+    deliverable: >
+      Architecture Decision Records covering Angular 18/Axis, Spring Boot, Okta
+      and the AWS target. Each ADR records the context, decision and trade-offs
+      so future engineers understand why choices were made.
+    owner:
+      kind: plugin
+      plugin: AIDLC-tech-architect
+      skill: adr-generate
+    status: fits
+    notes: >
+      `adr-generator.md` is framework-agnostic and records these decisions without
+      modification. Moved from the Global Workspace (was G3) into the Architecture
+      Workspace so the Architect can run it on the laptop via Claude Code CLI.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [developer, devops]
+    consumes: [frd]
+    produces: [adr]
+    target: docs
+    required_runner: cli
+    max_turns: 5
+    timeout_seconds: 600
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- A2 -----------------------------------------------------------------
+  - key: nfr
+    seq: 2
+    name: Non-Functional Requirements
+    agent_group: "Architecture Agent"
+    deliverable: >
+      Non-functional requirements: performance, availability, security posture,
+      observability and the read-only-database constraint.
+    owner:
+      kind: plugin
+      plugin: AIDLC-tech-architect
+      skill: nfr-generate
+    status: changes
+    notes: >
+      `nfr-generator` + `nfr-generate` exist in AIDLC-tech-architect v1.1.0.
+      Unproven: it marks any threshold it cannot evidence as THRESHOLD REQUIRED
+      rather than guessing, so expect real figures to need supplying.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [devops, product-owner]
+    consumes: [frd, adr]
+    produces: [nfr]
+    target: docs
+    required_runner: cli
+    max_turns: 5
+    timeout_seconds: 600
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- A3 -----------------------------------------------------------------
+  - key: sdd
+    seq: 3
+    name: System Design Document
+    agent_group: "Architecture Agent"
+    deliverable: >
+      System design taking FRD, ADR and NFR jointly, with the Draw.io
+      architecture diagram. This is where the old per-feature HLD now lives:
+      it is written once for the programme, not per EPIC.
+    owner:
+      kind: plugin
+      plugin: AIDLC-tech-architect
+      skill: sdd-generate
+    status: changes
+    notes: >
+      `architecture-designer.md` resolves two modes: SDD mode consumes FRD + ADR
+      + NFR together and refuses to design from two of the three, falling back to
+      BRD/PRD only when no such set exists.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [developer, devops]
+    consumes: [frd, adr, nfr]
+    produces: [sdd]
+    target: docs
+    required_runner: cli
+    max_turns: 15
+    timeout_seconds: 600
+    max_turns_policy: salvage
+    model: high
+    effort: high
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, Bash, TodoWrite, mcp__kb__*]
+
+  # --- A4 -----------------------------------------------------------------
+  - key: srd
+    seq: 4
+    name: System Requirement Document
+    agent_group: "Architecture Agent"
+    deliverable: >
+      System requirements traceable to the FRD and the SDD. The sole input to
+      EPIC decomposition. Approving this closes the Architecture Workspace, which
+      resumes the Global thread and allows EPIC-SET to run.
+    owner:
+      kind: plugin
+      plugin: AIDLC-tech-architect
+      skill: srd-generate
+    status: changes
+    notes: >
+      `srd-generator` + `srd-generate` exist in AIDLC-tech-architect v1.1.0.
+      Critical path: the Global Workspace cannot create EPICs until this is approved.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [business-analyst, product-owner]
+    consumes: [sdd, frd, nfr]
+    produces: [srd]
+    target: docs
+    required_runner: cli
+    max_turns: 15
+    timeout_seconds: 600
+    max_turns_policy: salvage
+    model: high
+    effort: high
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]

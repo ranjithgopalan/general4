@@ -1,0 +1,63 @@
+﻿﻿# Reverse Engineering -- CARD KNOWLEDGE BASE build (Layer 1 of the optimised design)
+#
+# Runs ONCE per application (and again when the corpus changes). It does not
+# produce SDLC documents; it produces the typed, cited, graph-linked knowledge
+# base that every forward-engineering stage grounds on:
+#
+#   workspaces/<app>/corpus/**  --(AIDLC-kb:kb-build via our runner)-->  kb/
+#     knowledge/**/*.md   cards ENT/BR/FR/SCR/WF/CMP/API with stable ids
+#     ontology/graph.json typed-edge graph
+#     evidence-map.jsonl  every card anchored to a source locus
+#
+# The deterministic gate (AIDLC-kb:kb-check) must PASS before the KB is persisted
+# as an artefact and published to workspaces/<app>/kb (Settings.kb_root_for).
+# From then on: the kb_card / graph_neighbors / kb_cards_search tools read it, the
+# stage prompts inject its top cards, the post-run grounding check verifies every
+# cited id against it, and the bounded ReAct builtin uses it in-process.
+#
+# Corpus: uploads via POST /projects/{id}/documents are kept raw under
+# workspaces/<app>/corpus/<kind>/; anything else can be dropped there directly.
+#
+# Cost / harness controls (FR-020): a build reads every corpus file, so its cap
+# is the highest in the estate; still bounded, and Sonnet (extraction tier).
+name: re-kb-build
+title: Reverse Engineering -- Card Knowledge Base
+description: >
+  Build the application's card / graph knowledge base from its raw corpus, gate
+  it deterministically, and publish it for the forward-engineering pipelines.
+tier: global
+kb_application: UW Credit Risk
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  - key: kb-build
+    seq: 1
+    name: Knowledge Base Build
+    deliverable: >
+      The as-is card / graph knowledge base for the application, built from the
+      corpus under inputs/corpus: one card per entity, business rule, functional
+      requirement, screen, workflow, component and API -- each with a stable id,
+      a summary and at least one evidence locus -- plus graph.json and the
+      evidence map, in the kb/ layout the platform reads. Cite or abstain.
+    owner:
+      kind: plugin
+      plugin: AIDLC-kb
+      skill: kb-build
+    status: fits
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [business-analyst, developer]
+    consumes: []
+    produces: [kb]
+    target: none
+    corpus: true          # materialise workspaces/<app>/corpus -> inputs/corpus
+    publish_kb: true      # gate with kb-check, then publish worktree kb/ -> kb_root_for(app)
+    grounding: off        # this stage *creates* the KB; nothing to check it against
+    max_turns: 5
+    timeout_seconds: 7200
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, Bash, TodoWrite, mcp__kb__*]

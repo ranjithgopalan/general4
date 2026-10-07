@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RED Dependency Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: project + scope bar above everything it filters; tabbed views left, sticky detail panel right; one column on phones.
+   Every view is fed by the /red-graph JSON endpoints, which read lmod's graph_nodes / graph_edges tables. */
+:root{
+  --bg:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1f0ec; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --accent:#2a78d6; --accent-ink:#1c5cab; --accent-soft:#cde2fb;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --other:#aeaca4;
+  --seq-lo:#cde2fb; --seq-hi:#0d366b; --seq-mid:#3987e5;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --tip-bg:#0b0b0b; --tip-fg:#f9f9f7; --tip-muted:#c3c2b7;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,"Courier New",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#232321; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --accent:#3987e5; --accent-ink:#86b6ef; --accent-soft:#184f95;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --other:#5f5e59;
+    --seq-lo:#0d366b; --seq-hi:#9ec5f4; --seq-mid:#3987e5;
+    --tip-bg:#f1f0ec; --tip-fg:#0b0b0b; --tip-muted:#52514e;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font-ui);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1400px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:15px;font-weight:600;margin:0 0 8px}
+h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 6px}
+p{margin:0}
+.sub{margin-top:4px;color:var(--ink-2);max-width:70ch}
+.top{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between}
+.stats{display:flex;flex-wrap:wrap;gap:6px 24px;margin:0}
+.stats div{display:flex;flex-direction:column}
+.stats dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stats dd{margin:0;font-size:20px;font-weight:500}
+.filters{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center;margin-top:18px;padding:10px 14px;border:1px solid var(--grid);border-radius:8px;background:var(--surface)}
+.filters label{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.hint{color:var(--muted);font-size:12px}
+select,input[type=number],input[type=search],input[type=text]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:4px 8px}
+input[type=number]{width:72px}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:2px;margin-top:18px;border-bottom:1px solid var(--grid);overflow-x:auto}
+.tabs button{appearance:none;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 12px;font:inherit;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;margin-top:16px;align-items:start}
+.views{min-width:0;display:grid;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--grid);border-radius:8px;padding:14px 16px;min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.panel-head p{color:var(--ink-2);max-width:70ch}
+.scroll{overflow-x:auto}
+.detail{position:sticky;top:12px;max-height:calc(100vh - 36px);overflow:auto;background:var(--surface);border:1px solid var(--grid);border-radius:8px;padding:14px 16px;min-width:0}
+@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.detail{position:static;max-height:none}}
+svg{display:block;max-width:100%;height:auto;font-family:var(--font-ui)}
+svg text{fill:var(--ink-2)}
+.controls{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;margin-bottom:10px;color:var(--ink-2)}
+.controls label{display:flex;align-items:center;gap:6px}
+.controls input[type=range]{width:160px;accent-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12px;color:var(--ink-2);margin-top:10px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.ramp{display:inline-block;width:120px;height:10px;border-radius:2px;background:linear-gradient(to right,var(--seq-lo),var(--seq-mid),var(--seq-hi));vertical-align:-1px;margin:0 6px}
+.status{margin-top:12px;padding:8px 12px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);font-size:13px}
+.status.error{color:var(--crit)}
+/* matrix */
+.cell{fill:var(--seq-mid);stroke:var(--surface);stroke-width:2;cursor:pointer}
+.cell{fill:color-mix(in oklab,var(--seq-hi) calc(var(--v) * 100%),var(--seq-lo))}
+.cell.zero,.cell.diag{fill:var(--surface-2)}
+.cell:hover,.cell:focus-visible{stroke:var(--ink);outline:none}
+.cell-label{font-size:10px;pointer-events:none;font-variant-numeric:tabular-nums}
+.cell-label.hi{fill:var(--surface)} .cell-label.lo{fill:var(--ink)} .cell-label.diag-label{fill:var(--muted)}
+.rowlab,.collab{font-size:12px;cursor:pointer}
+.rowlab:hover,.collab:hover{fill:var(--accent-ink)}
+.total{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
+.axis-title{font-size:11px;fill:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pairs{display:grid;gap:4px;margin-top:6px}
+.pairrow{display:grid;grid-template-columns:minmax(0,1fr) 2fr 44px;gap:10px;align-items:center;appearance:none;border:0;background:none;padding:3px 4px;font:inherit;color:var(--ink);text-align:left;cursor:pointer;border-radius:4px}
+.pairrow:hover{background:var(--surface-2)}
+.pairrow .lbl{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pairrow .bar{height:10px;border-radius:0 3px 3px 0;background:var(--s1)}
+.pairrow .num{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+/* module graph */
+.medge{fill:none;stroke:var(--muted);stroke-opacity:.45;cursor:pointer}
+.medge.on{stroke:var(--accent);stroke-opacity:.95} .medge.dim{stroke-opacity:.07}
+.mnode circle{fill:var(--s1);stroke:var(--surface);stroke-width:2;cursor:pointer}
+.mnode.dim circle{fill-opacity:.25} .mnode text{font-size:11.5px;pointer-events:none} .mnode.dim text{fill-opacity:.35}
+/* file + traversal graphs */
+.graph-svg{background:var(--surface);border-radius:6px;cursor:grab}
+.hull{fill:var(--ink);fill-opacity:.035;stroke:var(--ink);stroke-opacity:.07;stroke-width:30;stroke-linejoin:round}
+.hull-label{font-size:11px;font-weight:600;fill:var(--muted);letter-spacing:.05em;text-transform:uppercase;pointer-events:none}
+.link{stroke:var(--muted);stroke-opacity:.4;stroke-width:1}
+.link.intra{stroke:var(--axis);stroke-opacity:.7}
+.link.on{stroke:var(--accent);stroke-opacity:.95;stroke-width:1.6}
+.link.dim{stroke-opacity:.06} .link.faint{stroke-opacity:.14}
+.fnode{stroke:var(--surface);stroke-width:1.5;cursor:pointer;fill:var(--other)}
+.fnode.out{fill-opacity:.5} .fnode.sel{stroke:var(--ink);stroke-width:2.5} .fnode.dim{fill-opacity:.12} .fnode.start{stroke:var(--ink);stroke-width:3}
+.by-layer .fnode.L-ui{fill:var(--s1)} .by-layer .fnode.L-bl{fill:var(--s2)} .by-layer .fnode.L-da{fill:var(--s3)} .by-layer .fnode.L-other{fill:var(--other)}
+.by-risk .fnode.R-low{fill:var(--good)} .by-risk .fnode.R-medium{fill:var(--warn)} .by-risk .fnode.R-high{fill:var(--crit)}
+.flabel{font:10px var(--font-mono);fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.arrow{fill:var(--muted)} .arrow-intra{fill:var(--axis)} .arrow-on{fill:var(--accent)}
+.ring{fill:none;stroke:var(--grid)}
+.ring-label{font-size:10px;fill:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hop-label{font-size:10px;fill:var(--muted)} .hop-name{font:11px var(--font-mono);fill:var(--ink)}
+.empty{fill:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--axis);background:var(--surface);color:var(--ink-2);cursor:pointer;line-height:1.3}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.static{cursor:default} .chip .n{color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.linkbtn{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--accent-ink);cursor:pointer;text-align:left}
+.linkbtn:hover{text-decoration:underline}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.btn{font:inherit;font-size:13px;padding:5px 11px;border-radius:6px;border:1px solid var(--axis);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--ink-2)} .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.detail h2{word-break:break-word}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-variant-numeric:tabular-nums}
+.purpose{color:var(--ink-2);font-size:13px;margin-top:10px}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13px}
+.list li{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.list .n{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.edgelist{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:12.5px}
+.edgelist li{padding-left:8px;border-left:2px solid var(--grid)}
+.edgelist .ev{display:block;color:var(--muted);font-size:12px;margin-top:1px}
+.modgroup{margin-top:6px} .modgroup .mg{font-size:12px;color:var(--muted);margin-bottom:2px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.dot.low{background:var(--good)} .dot.medium{background:var(--warn)} .dot.high{background:var(--crit)}
+.note{color:var(--ink-2);font-size:13px} .note + .note{margin-top:8px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--axis);padding:6px 8px;white-space:nowrap}
+.tbl td{padding:5px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+.tbl td.mono{font-size:12px} .tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl td.ev{color:var(--ink-2);max-width:380px} .tbl tbody tr:hover{background:var(--surface-2)}
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--tip-bg);color:var(--tip-fg);padding:7px 10px;border-radius:6px;font-size:12px;max-width:320px;box-shadow:0 4px 14px rgba(0,0,0,.18);line-height:1.4}
+#tip .t{font-weight:600;font-family:var(--font-mono);font-size:12px;word-break:break-all}
+#tip .k{color:var(--tip-muted)} #tip .v{font-weight:600}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>RED Dependency Map</h1>
+      <p class="sub">Page-to-page references of a legacy application, read live from the <span class="mono">graph_nodes</span> and <span class="mono">graph_edges</span> tables that the RED file analyses were compiled into. Pick a project, then explore by module, by file, or by walking the graph.</p>
+    </div>
+    <dl class="stats" id="stats"></dl>
+  </header>
+
+  <section class="filters" aria-label="Project and scope">
+    <label>Project <select id="f-project"></select></label>
+    <button class="btn" type="button" id="btn-build" title="Re-derive edges from red_file_analyses and rewrite the graph tables">Rebuild from table</button>
+    <label>Reference kind
+      <select id="f-kind">
+        <option value="all">All references</option>
+        <option value="USES">Includes, redirects and links (USES)</option>
+        <option value="CALLS">Form posts and navigation (CALLS)</option>
+      </select>
+    </label>
+    <label>Hide hub pages with at least <input type="number" id="f-hub" min="5" max="500" step="5" placeholder="off"> <span class="hint">connections</span></label>
+    <div class="chips" id="hub-list" aria-live="polite"></div>
+  </section>
+  <div class="status" id="status" hidden></div>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" data-tab="matrix" aria-selected="true">Module matrix</button>
+    <button role="tab" data-tab="modgraph" aria-selected="false">Module graph</button>
+    <button role="tab" data-tab="files" aria-selected="false">File graph</button>
+    <button role="tab" data-tab="trav" aria-selected="false">Traverse</button>
+    <button role="tab" data-tab="table" aria-selected="false">Reference table</button>
+  </nav>
+
+  <div class="layout">
+    <div class="views">
+      <section class="panel" id="view-matrix" role="tabpanel">
+        <div class="panel-head">
+          <h2>Who references whom, module by module</h2>
+          <p>Rows are the referencing module, columns the referenced one. Darker means more page-level references. The diagonal shows references that stay inside a module. Click a cell to list the pages behind it.</p>
+        </div>
+        <div class="scroll"><svg id="matrix-svg" role="img" aria-label="Module-to-module reference counts"></svg></div>
+        <div class="legend"><span>1</span><span class="ramp" aria-hidden="true"></span><span id="matrix-max"></span><span class="hint">references between two modules</span></div>
+        <h3>Strongest cross-module links</h3>
+        <div class="pairs" id="top-pairs"></div>
+      </section>
+
+      <section class="panel" id="view-modgraph" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Module graph</h2>
+          <p>Each circle is a source folder, sized by its page count. Arrows point from the referencing module to the referenced one, thicker for more references. Hover a module to isolate its links.</p>
+        </div>
+        <div class="controls"><label>Show links with at least <input type="range" id="mod-min" min="1" max="50" value="5"> <span id="mod-min-val">5</span> references</label></div>
+        <svg id="modgraph-svg" role="img" aria-label="Directed graph of module dependencies"></svg>
+      </section>
+
+      <section class="panel" id="view-files" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>File graph</h2>
+          <p>Pages clustered by module. Pick the modules to show. Arrows point from the referencing page to the page it includes, redirects to or posts to. Drag to pan, scroll to zoom, click a page for its details.</p>
+        </div>
+        <div class="controls"><span>Modules:</span><button class="linkbtn" id="scope-all" type="button">all</button><button class="linkbtn" id="scope-none" type="button">none</button></div>
+        <div class="chips" id="scope-chips"></div>
+        <div class="controls" style="margin-top:10px">
+          <label><input type="checkbox" id="opt-neigh" checked> Include directly connected pages from other modules</label>
+          <label><input type="checkbox" id="opt-intra"> Hide references inside a module</label>
+          <label>Colour by <select id="opt-color"><option value="layer">Layer</option><option value="risk">Risk level</option></select></label>
+          <label>Find page <input type="search" id="file-search" list="file-list" placeholder="e.g. accgetBusinessline.asp" autocomplete="off"></label>
+        </div>
+        <svg id="file-svg" class="graph-svg" role="img" aria-label="Force-directed graph of page references"></svg>
+        <div class="legend" id="file-legend"></div>
+        <p class="hint" id="file-count" style="margin-top:6px"></p>
+      </section>
+
+      <section class="panel" id="view-trav" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Traverse from a page</h2>
+          <p>Each hop is a query against the edge table. Downstream answers "what does this page use"; upstream answers "what breaks if this page changes". Rings are hops from the start. Give a second page to get the shortest reference chain between the two instead. Hub pages hidden in the scope bar are skipped by the walk.</p>
+        </div>
+        <div class="controls">
+          <label>Start page <input type="search" id="trav-start" list="file-list" placeholder="e.g. accaddbusinessline.asp" autocomplete="off"></label>
+          <label>Direction <select id="trav-dir"><option value="down">Downstream: what it references</option><option value="up">Upstream: what references it</option><option value="both">Both</option></select></label>
+          <label>Depth <input type="range" id="trav-depth" min="1" max="6" value="2"> <span id="trav-depth-val">2</span></label>
+          <label>Path to <input type="search" id="trav-to" list="file-list" placeholder="optional second page" autocomplete="off"></label>
+          <button class="btn" type="button" id="trav-clear">Clear</button>
+        </div>
+        <svg id="trav-svg" class="graph-svg" role="img" aria-label="Reachability rings from the start page"></svg>
+        <div class="legend" id="trav-legend"></div>
+        <p class="hint" id="trav-count" style="margin-top:6px"></p>
+      </section>
+
+      <section class="panel" id="view-table" role="tabpanel" hidden>
+        <div class="panel-head">
+          <h2>Reference table</h2>
+          <p>Every page-to-page edge in the graph table, with the text the analysis recorded as evidence. Same data as the graphs, searchable.</p>
+        </div>
+        <div class="controls"><label>Filter <input type="search" id="tbl-filter" placeholder="page or module name"></label><span class="hint" id="tbl-count"></span></div>
+        <h3>Module pairs</h3>
+        <div class="scroll"><table class="tbl" id="pair-table"><thead><tr><th>From module</th><th>To module</th><th class="num">References</th></tr></thead><tbody></tbody></table></div>
+        <h3>Page references</h3>
+        <div class="scroll"><table class="tbl" id="edge-table"><thead><tr><th>From page</th><th>Module</th><th>To page</th><th>Module</th><th>Kind</th><th>Evidence</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+  <datalist id="file-list"></datalist>
+</div>
+<div id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function(){
+'use strict';
+const API = location.pathname.replace(/\/ui\/?$/, '');
+const LAYER_CLASS = { 'UI': 'L-ui', 'Business Logic': 'L-bl', 'Data Access': 'L-da' };
+const KIND_LABEL = { USES: 'include / redirect / link', CALLS: 'form post / navigation' };
+const fmt = n => (n == null ? '' : Number(n).toLocaleString('en-US'));
+
+const S = { project: null, kind: 'all', hub: null, tab: 'matrix', scope: new Set(), neighbours: true, hideIntra: false,
+  colorBy: 'layer', minMod: 5, selected: null, fileSel: null, tblFilter: '', trav: { start: null, dir: 'down', depth: 2, to: null } };
+
+// ---------- API ----------
+async function api(path, opts){
+  const r = await fetch(API + path, Object.assign({ headers: { 'Accept': 'application/json' } }, opts || {}));
+  if (!r.ok) { let msg = r.status + ' ' + r.statusText; try { const j = await r.json(); if (j.detail) msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail); } catch (e) {} throw new Error(msg); }
+  return r.json();
+}
+const statusEl = document.getElementById('status');
+function setStatus(text, isError){ statusEl.textContent = text || ''; statusEl.hidden = !text; statusEl.classList.toggle('error', !!isError); }
+
+// ---------- data (from the tables, via the API) ----------
+let G = { nodes: [], edges: [], byId: new Map(), modules: [], modInfo: new Map(), filesByMod: new Map() };
+let E = [], deg = new Map(), hubs = [], outE = new Map(), inE = new Map(), M = new Map(), pairList = [];
+function push(map, k, v){ if (!map.has(k)) map.set(k, []); map.get(k).push(v); }
+
+async function loadProject(pid){
+  setStatus('Loading ' + pid + ' from the graph tables…');
+  const g = await api(`/${encodeURIComponent(pid)}/graph`);
+  G.nodes = g.nodes; G.edges = g.edges; G.byId = new Map(g.nodes.map(n => [n.id, n]));
+  G.filesByMod = new Map(); G.modInfo = new Map();
+  g.nodes.forEach(n => { push(G.filesByMod, n.module, n); const m = G.modInfo.get(n.module) || { id: n.module, files: 0, loc: 0 }; m.files++; m.loc += n.loc || 0; G.modInfo.set(n.module, m); });
+  G.modules = [...G.modInfo.keys()].sort();
+  if (!S.scope.size || ![...S.scope].some(m => G.modInfo.has(m))) {
+    const busiest = [...G.modInfo.values()].sort((a, b) => b.files - a.files)[0];
+    S.scope = new Set(busiest ? [busiest.id] : []);
+  }
+  S.selected = null; S.fileSel = null; S.trav = { start: null, dir: S.trav.dir, depth: S.trav.depth, to: null };
+  document.getElementById('trav-start').value = ''; document.getElementById('trav-to').value = '';
+  const dl = document.getElementById('file-list'); dl.replaceChildren();
+  g.nodes.slice().sort((a, b) => a.file.localeCompare(b.file)).forEach(n => { const o = document.createElement('option'); o.value = fileKey(n); dl.appendChild(o); });
+  setStatus('');
+  syncFileControls();
+  renderAll();
+}
+const fileKey = n => `${n.file} [${n.module}]`;
+function resolveFile(text){
+  const v = (text || '').trim(); if (!v) return null;
+  let hit = G.nodes.find(n => fileKey(n) === v); if (hit) return hit;
+  const low = v.toLowerCase();
+  hit = G.nodes.find(n => n.file.toLowerCase() === low) || G.nodes.find(n => n.file.toLowerCase().includes(low));
+  return hit || null;
+}
+
+function recompute(){
+  const base = G.edges.filter(e => S.kind === 'all' || e.rel_type === S.kind);
+  const d = new Map();
+  base.forEach(e => { d.set(e.source, (d.get(e.source)||0)+1); d.set(e.target, (d.get(e.target)||0)+1); });
+  hubs = S.hub ? G.nodes.filter(n => (d.get(n.id)||0) >= S.hub).map(n => n.id).sort((a, b) => d.get(b) - d.get(a)) : [];
+  const hubSet = new Set(hubs);
+  E = base.filter(e => !hubSet.has(e.source) && !hubSet.has(e.target));
+  deg = new Map(); outE = new Map(); inE = new Map(); M = new Map();
+  E.forEach(e => {
+    deg.set(e.source, (deg.get(e.source)||0)+1); deg.set(e.target, (deg.get(e.target)||0)+1);
+    push(outE, e.source, e); push(inE, e.target, e);
+    push(M, G.byId.get(e.source).module + '|' + G.byId.get(e.target).module, e);
+  });
+  pairList = [...M.entries()].map(([k, es]) => { const [a, b] = k.split('|'); return { a, b, c: es.length }; });
+}
+const pairEdges = (a, b) => M.get(a + '|' + b) || [];
+const pairCount = (a, b) => pairEdges(a, b).length;
+
+// ---------- tooltip ----------
+const tipEl = document.getElementById('tip');
+function showTip(ev, title, rows){
+  tipEl.replaceChildren();
+  const t = document.createElement('div'); t.className = 't'; t.textContent = title; tipEl.appendChild(t);
+  rows.forEach(([k, v]) => { const r = document.createElement('div'); const kk = document.createElement('span'); kk.className = 'k'; kk.textContent = k + ' '; const vv = document.createElement('span'); vv.className = 'v'; vv.textContent = v; r.append(kk, vv); tipEl.appendChild(r); });
+  tipEl.hidden = false; moveTip(ev);
+}
+function moveTip(ev){ const pad = 14, w = tipEl.offsetWidth, h = tipEl.offsetHeight; let x = ev.clientX + pad, y = ev.clientY + pad; if (x + w > innerWidth - 8) x = ev.clientX - w - pad; if (y + h > innerHeight - 8) y = ev.clientY - h - pad; tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px'; }
+function hideTip(){ tipEl.hidden = true; }
+
+// ---------- stats ----------
+function renderStats(){
+  const cross = pairList.filter(p => p.a !== p.b).reduce((s, p) => s + p.c, 0);
+  const dl = document.getElementById('stats'); dl.replaceChildren();
+  [['Pages', G.nodes.length], ['References', E.length], ['Cross-module', cross], ['Modules', G.modules.length]]
+    .forEach(([k, v]) => { const d = document.createElement('div'); const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = fmt(v); d.append(dt, dd); dl.appendChild(d); });
+  const hl = document.getElementById('hub-list'); hl.replaceChildren();
+  hubs.forEach(h => { const c = document.createElement('span'); c.className = 'chip static'; c.textContent = G.byId.get(h).file; const n = document.createElement('span'); n.className = 'n'; n.textContent = 'hidden'; c.appendChild(n); hl.appendChild(c); });
+}
+
+// ---------- module matrix ----------
+function renderMatrix(){
+  const MODS = G.modules, n = MODS.length, cell = 30, left = 196, top = 150, right = 54, bottom = 34;
+  const W = left + n*cell + right, H = top + n*cell + bottom;
+  const svg = d3.select('#matrix-svg').attr('viewBox', `0 0 ${W} ${H}`); svg.selectAll('*').remove();
+  if (!n) return;
+  const counts = MODS.map(a => MODS.map(b => pairCount(a, b)));
+  const max = d3.max(MODS.flatMap((a, i) => MODS.map((b, j) => i === j ? 0 : counts[i][j]))) || 1;
+  document.getElementById('matrix-max').textContent = fmt(max);
+  const g = svg.append('g').attr('transform', `translate(${left},${top})`);
+  g.append('text').attr('class', 'axis-title').attr('x', -10).attr('y', -12).attr('text-anchor', 'end').text('references from');
+  g.append('text').attr('class', 'axis-title').attr('transform', `translate(${n*cell/2},${n*cell + 28})`).attr('text-anchor', 'middle').text('references to');
+  g.selectAll('.collab').data(MODS).join('text').attr('class', 'collab').attr('transform', (d, j) => `translate(${j*cell + cell/2 + 4},-8) rotate(-62)`).attr('text-anchor', 'start').text(d => d).on('click', (ev, d) => select({ type: 'module', id: d }));
+  g.selectAll('.rowlab').data(MODS).join('text').attr('class', 'rowlab').attr('x', -10).attr('y', (d, i) => i*cell + cell/2 + 4).attr('text-anchor', 'end').text(d => d).on('click', (ev, d) => select({ type: 'module', id: d }));
+  const cells = []; MODS.forEach((a, i) => MODS.forEach((b, j) => cells.push({ a, b, i, j, c: counts[i][j] })));
+  const act = d => d.i === d.j ? select({ type: 'module', id: d.a }) : select({ type: 'pair', a: d.a, b: d.b });
+  g.selectAll('.cell').data(cells).join('rect').attr('class', d => 'cell' + (d.i === d.j ? ' diag' : d.c === 0 ? ' zero' : ''))
+    .attr('x', d => d.j*cell).attr('y', d => d.i*cell).attr('width', cell).attr('height', cell).attr('rx', 3).attr('tabindex', 0).attr('role', 'button')
+    .attr('aria-label', d => d.i === d.j ? `${d.a}: ${d.c} references inside the module` : `${d.a} to ${d.b}: ${d.c} references`)
+    .style('--v', d => (d.i === d.j || d.c === 0) ? 0 : (0.15 + 0.85*d.c/max).toFixed(3))
+    .on('pointerenter', (ev, d) => showTip(ev, d.i === d.j ? d.a : `${d.a} → ${d.b}`, [[d.i === d.j ? 'inside module' : 'references', fmt(d.c)]]))
+    .on('pointermove', moveTip).on('pointerleave', hideTip).on('click', (ev, d) => act(d))
+    .on('keydown', (ev, d) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); act(d); } });
+  g.selectAll('.cell-label').data(cells.filter(d => d.c > 0 && (d.i === d.j || d.c >= max*0.25))).join('text')
+    .attr('class', d => 'cell-label ' + (d.i === d.j ? 'diag-label' : (d.c/max >= 0.55 ? 'hi' : 'lo')))
+    .attr('x', d => d.j*cell + cell/2).attr('y', d => d.i*cell + cell/2 + 3.5).attr('text-anchor', 'middle').text(d => d.c);
+  g.selectAll('.rowtot').data(MODS).join('text').attr('class', 'total').attr('x', n*cell + 8).attr('y', (d, i) => i*cell + cell/2 + 3.5).text((d, i) => counts[i].reduce((s, c, j) => s + (j === i ? 0 : c), 0));
+  g.append('text').attr('class', 'axis-title').attr('x', n*cell + 8).attr('y', -12).text('out');
+  g.selectAll('.coltot').data(MODS).join('text').attr('class', 'total').attr('x', (d, j) => j*cell + cell/2).attr('y', n*cell + 12).attr('text-anchor', 'middle').text((d, j) => counts.reduce((s, row, i) => s + (i === j ? 0 : row[j]), 0));
+  g.append('text').attr('class', 'axis-title').attr('x', -10).attr('y', n*cell + 12).attr('text-anchor', 'end').text('in');
+  const top12 = pairList.filter(p => p.a !== p.b).sort((x, y) => y.c - x.c).slice(0, 12);
+  const box = document.getElementById('top-pairs'); box.replaceChildren();
+  const pmax = top12.length ? top12[0].c : 1;
+  top12.forEach(p => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pairrow'; const l = document.createElement('span'); l.className = 'lbl'; l.textContent = `${p.a} → ${p.b}`; const bar = document.createElement('div'); bar.className = 'bar'; bar.style.width = (p.c/pmax*100).toFixed(1) + '%'; const n2 = document.createElement('span'); n2.className = 'num'; n2.textContent = fmt(p.c); b.append(l, bar, n2); b.addEventListener('click', () => select({ type: 'pair', a: p.a, b: p.b })); box.appendChild(b); });
+}
+
+// ---------- module graph ----------
+function addMarkers(defs, specs){ specs.forEach(([id, cls, ref, size]) => defs.append('marker').attr('id', id).attr('viewBox', '0 0 10 10').attr('refX', ref).attr('refY', 5).attr('markerWidth', size).attr('markerHeight', size).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('class', cls).attr('d', 'M0,1.5 L8,5 L0,8.5 Z')); }
+function renderModGraph(){
+  const MODS = G.modules, W = 780, H = 720, cx = W/2, cy = H/2, R = 262;
+  const svg = d3.select('#modgraph-svg').attr('viewBox', `0 0 ${W} ${H}`); svg.selectAll('*').remove();
+  if (!MODS.length) return;
+  addMarkers(svg.append('defs'), [['marr', 'arrow', 9, 9], ['marr-on', 'arrow-on', 9, 9]]);
+  const rS = d3.scaleSqrt().domain([0, d3.max(MODS, m => G.modInfo.get(m).files)]).range([6, 26]);
+  const pos = new Map(MODS.map((m, i) => { const a = -Math.PI/2 + i*2*Math.PI/MODS.length; return [m, { x: cx + R*Math.cos(a), y: cy + R*Math.sin(a), a, r: rS(G.modInfo.get(m).files) }]; }));
+  const cross = pairList.filter(p => p.a !== p.b); const maxAll = d3.max(cross, p => p.c) || 1;
+  const slider = document.getElementById('mod-min'); slider.max = Math.max(1, maxAll); if (S.minMod > maxAll) S.minMod = Math.max(1, Math.min(5, maxAll)); slider.value = S.minMod; document.getElementById('mod-min-val').textContent = S.minMod;
+  const shown = cross.filter(p => p.c >= S.minMod); const wS = d3.scaleSqrt().domain([1, maxAll]).range([1, 9]);
+  function path(p){ const s = pos.get(p.a), t = pos.get(p.b); const mx = (s.x + t.x)/2, my = (s.y + t.y)/2, dx = t.x - s.x, dy = t.y - s.y, L = Math.hypot(dx, dy) || 1, nx = -dy/L, ny = dx/L; const qx = mx + (cx - mx)*0.35 + nx*20, qy = my + (cy - my)*0.35 + ny*20; const sdx = qx - s.x, sdy = qy - s.y, sl = Math.hypot(sdx, sdy) || 1, tdx = qx - t.x, tdy = qy - t.y, tl = Math.hypot(tdx, tdy) || 1; return `M${s.x + sdx/sl*s.r},${s.y + sdy/sl*s.r} Q${qx},${qy} ${t.x + tdx/tl*(t.r + 4)},${t.y + tdy/tl*(t.r + 4)}`; }
+  const edges = svg.append('g').selectAll('path').data(shown).join('path').attr('class', 'medge').attr('d', path).attr('stroke-width', p => wS(p.c)).attr('marker-end', 'url(#marr)')
+    .on('pointerenter', function(ev, p){ edges.classed('dim', q => q !== p); d3.select(this).classed('on', true).attr('marker-end', 'url(#marr-on)').raise(); showTip(ev, `${p.a} → ${p.b}`, [['references', fmt(p.c)], ['reverse', fmt(pairCount(p.b, p.a))]]); })
+    .on('pointermove', moveTip).on('pointerleave', function(){ edges.classed('dim', false); d3.select(this).classed('on', false).attr('marker-end', 'url(#marr)'); hideTip(); })
+    .on('click', (ev, p) => select({ type: 'pair', a: p.a, b: p.b }));
+  const nodeG = svg.append('g').selectAll('g').data(MODS).join('g').attr('class', 'mnode').attr('transform', m => { const p = pos.get(m); return `translate(${p.x},${p.y})`; })
+    .on('pointerenter', (ev, m) => { edges.classed('dim', p => p.a !== m && p.b !== m).classed('on', p => p.a === m || p.b === m).attr('marker-end', p => (p.a === m || p.b === m) ? 'url(#marr-on)' : 'url(#marr)'); nodeG.classed('dim', o => o !== m && !shown.some(p => (p.a === m && p.b === o) || (p.b === m && p.a === o))); const outC = cross.filter(p => p.a === m).reduce((s, p) => s + p.c, 0), inC = cross.filter(p => p.b === m).reduce((s, p) => s + p.c, 0); showTip(ev, m, [['pages', fmt(G.modInfo.get(m).files)], ['references out', fmt(outC)], ['references in', fmt(inC)], ['inside module', fmt(pairCount(m, m))]]); })
+    .on('pointermove', moveTip).on('pointerleave', () => { edges.classed('dim', false).classed('on', false).attr('marker-end', 'url(#marr)'); nodeG.classed('dim', false); hideTip(); })
+    .on('click', (ev, m) => select({ type: 'module', id: m }));
+  nodeG.append('circle').attr('r', m => pos.get(m).r);
+  nodeG.append('text').text(m => m).attr('x', m => { const p = pos.get(m); return Math.cos(p.a)*(p.r + 10); }).attr('y', m => { const p = pos.get(m); return Math.sin(p.a)*(p.r + 10) + 4; })
+    .attr('text-anchor', m => { const c = Math.cos(pos.get(m).a); return c > 0.15 ? 'start' : c < -0.15 ? 'end' : 'middle'; }).attr('dy', m => { const s = Math.sin(pos.get(m).a); return s < -0.85 ? -8 : s > 0.85 ? 8 : 0; });
+}
+
+// ---------- file graph ----------
+let sim = null, fileView = null;
+const rLoc = () => d3.scaleSqrt().domain([0, d3.max(G.nodes, n => n.loc) || 1]).range([3.5, 15]);
+function nodeClass(d, extra){ const n = d.n; return 'fnode ' + (d.inScope === false ? 'out ' : '') + (LAYER_CLASS[n.layer] || 'L-other') + ' R-' + (n.risk || 'unknown') + (n.id === S.fileSel ? ' sel' : '') + (extra || ''); }
+function fileScope(){
+  const inScope = new Set(G.nodes.filter(n => S.scope.has(n.module)).map(n => n.id));
+  const shown = new Set(inScope);
+  if (S.neighbours) E.forEach(e => { if (inScope.has(e.source)) shown.add(e.target); if (inScope.has(e.target)) shown.add(e.source); });
+  let edges = E.filter(e => shown.has(e.source) && shown.has(e.target) && (inScope.has(e.source) || inScope.has(e.target)));
+  if (S.hideIntra) edges = edges.filter(e => G.byId.get(e.source).module !== G.byId.get(e.target).module);
+  return { inScope, shown: [...shown].map(id => G.byId.get(id)), edges };
+}
+function renderFileGraph(){
+  const { inScope, shown, edges } = fileScope();
+  if (sim) sim.stop();
+  const W = 980, H = 680, rs = rLoc();
+  const svg = d3.select('#file-svg').attr('viewBox', `0 0 ${W} ${H}`).attr('class', 'graph-svg by-' + S.colorBy);
+  svg.selectAll('*').remove(); svg.on('.zoom', null);
+  document.getElementById('file-count').textContent = shown.length ? `${fmt(shown.length)} pages and ${fmt(edges.length)} references shown.` : '';
+  renderLegend('file-legend', 'Circle size: lines of code. Faded circles: pages outside the chosen modules.');
+  if (!shown.length) { svg.append('text').attr('class', 'empty').attr('x', W/2).attr('y', H/2).attr('text-anchor', 'middle').text('Pick at least one module above.'); fileView = null; return; }
+  addMarkers(svg.append('defs'), [['arr', 'arrow', 8, 7], ['arr-intra', 'arrow-intra', 8, 7], ['arr-on', 'arrow-on', 8, 7]]);
+  const root = svg.append('g'); svg.call(d3.zoom().scaleExtent([0.3, 6]).on('zoom', ev => root.attr('transform', ev.transform)));
+  const fnodes = shown.map(n => ({ id: n.id, n, r: rs(n.loc), inScope: inScope.has(n.id) })); const idx = new Map(fnodes.map(d => [d.id, d]));
+  const flinks = edges.map(e => ({ source: idx.get(e.source), target: idx.get(e.target), e, intra: G.byId.get(e.source).module === G.byId.get(e.target).module }));
+  const modsShown = [...new Set(shown.map(n => n.module))].sort(); const k = modsShown.length, CR = k === 1 ? 0 : Math.min(W, H)*0.34;
+  const center = new Map(modsShown.map((m, i) => { const a = -Math.PI/2 + i*2*Math.PI/k; return [m, { x: W/2 + CR*Math.cos(a), y: H/2 + CR*Math.sin(a) }]; }));
+  const rnd = d3.randomLcg(42); fnodes.forEach(d => { const c = center.get(d.n.module); d.x = c.x + (rnd() - .5)*80; d.y = c.y + (rnd() - .5)*80; });
+  const localDeg = new Map(), adj = new Map(); flinks.forEach(l => { localDeg.set(l.source.id, (localDeg.get(l.source.id)||0)+1); localDeg.set(l.target.id, (localDeg.get(l.target.id)||0)+1); push(adj, l.source.id, l.target.id); push(adj, l.target.id, l.source.id); });
+  sim = d3.forceSimulation(fnodes).force('link', d3.forceLink(flinks).id(d => d.id).distance(36).strength(0.25)).force('charge', d3.forceManyBody().strength(-75).distanceMax(280)).force('collide', d3.forceCollide(d => d.r + 3)).force('x', d3.forceX(d => center.get(d.n.module).x).strength(0.15)).force('y', d3.forceY(d => center.get(d.n.module).y).strength(0.15)).stop();
+  const hullG = root.append('g'), linkG = root.append('g'), nodeG = root.append('g'), labelG = root.append('g');
+  const hull = hullG.selectAll('path').data(modsShown).join('path').attr('class', 'hull');
+  const hullLab = hullG.selectAll('text').data(modsShown).join('text').attr('class', 'hull-label').attr('text-anchor', 'middle').text(d => d);
+  const markerFor = l => l.intra ? 'url(#arr-intra)' : 'url(#arr)';
+  const link = linkG.selectAll('line').data(flinks).join('line').attr('class', l => 'link' + (l.intra ? ' intra' : '')).attr('marker-end', markerFor);
+  const showAllLabels = fnodes.length <= 90;
+  const node = nodeG.selectAll('circle').data(fnodes).join('circle').attr('class', d => nodeClass(d)).attr('r', d => d.r)
+    .on('pointerenter', (ev, d) => { const nb = new Set(adj.get(d.id) || []); node.classed('dim', o => o !== d && !nb.has(o.id)); link.classed('on', l => l.source === d || l.target === d).classed('dim', l => !(l.source === d || l.target === d)).attr('marker-end', l => (l.source === d || l.target === d) ? 'url(#arr-on)' : markerFor(l)); showTip(ev, d.n.file, [['module', d.n.module], ['layer', d.n.layer || 'unknown'], ['risk', d.n.risk || 'unknown'], ['lines', fmt(d.n.loc)], ['references out / in', `${(outE.get(d.id)||[]).length} / ${(inE.get(d.id)||[]).length}`]]); })
+    .on('pointermove', moveTip).on('pointerleave', () => { node.classed('dim', false); link.classed('on', false).classed('dim', false).attr('marker-end', markerFor); hideTip(); applyPairHighlight(); })
+    .on('click', (ev, d) => { ev.stopPropagation(); select({ type: 'file', id: d.id }); });
+  const label = labelG.selectAll('text').data(fnodes.filter(d => showAllLabels || (localDeg.get(d.id)||0) >= 6 || d.id === S.fileSel || d.r >= 11)).join('text').attr('class', 'flabel').text(d => d.n.file);
+  function applyPairHighlight(){ const s = S.selected; if (s && s.type === 'pair') { const hit = l => !l.intra && ((l.source.n.module === s.a && l.target.n.module === s.b) || (l.source.n.module === s.b && l.target.n.module === s.a)); link.classed('on', hit).attr('marker-end', l => hit(l) ? 'url(#arr-on)' : markerFor(l)); } node.classed('sel', d => d.id === S.fileSel); }
+  function tick(){
+    link.each(function(l){ const dx = l.target.x - l.source.x, dy = l.target.y - l.source.y, L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L; this.setAttribute('x1', l.source.x + ux*l.source.r); this.setAttribute('y1', l.source.y + uy*l.source.r); this.setAttribute('x2', l.target.x - ux*(l.target.r + 4)); this.setAttribute('y2', l.target.y - uy*(l.target.r + 4)); });
+    node.attr('cx', d => d.x).attr('cy', d => d.y); label.attr('x', d => d.x + d.r + 3).attr('y', d => d.y + 3.5);
+    const byMod = d3.group(fnodes, d => d.n.module);
+    hull.attr('d', m => { const pts = (byMod.get(m) || []).flatMap(d => [[d.x - d.r, d.y - d.r], [d.x + d.r, d.y - d.r], [d.x - d.r, d.y + d.r], [d.x + d.r, d.y + d.r]]); const h = d3.polygonHull(pts); return h ? 'M' + h.join('L') + 'Z' : null; });
+    hullLab.attr('x', m => d3.mean(byMod.get(m) || [], d => d.x)).attr('y', m => (d3.min(byMod.get(m) || [], d => d.y - d.r) || 0) - 22);
+  }
+  fileView = { applyPairHighlight };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { sim.tick(300); tick(); } else { sim.on('tick', tick).alpha(1).restart(); }
+  applyPairHighlight();
+}
+function renderLegend(id, note){
+  const lg = document.getElementById(id); lg.replaceChildren();
+  const items = S.colorBy === 'layer' ? [['UI', 'var(--s1)'], ['Business Logic', 'var(--s2)'], ['Data Access', 'var(--s3)'], ['Other', 'var(--other)']] : [['Low risk', 'var(--good)'], ['Medium risk', 'var(--warn)'], ['High risk', 'var(--crit)']];
+  items.forEach(([t, c]) => { const s = document.createElement('span'); const sw = document.createElement('i'); sw.className = 'sw'; sw.style.background = c; s.append(sw, document.createTextNode(t)); lg.appendChild(s); });
+  const sz = document.createElement('span'); sz.textContent = note; lg.appendChild(sz);
+}
+function renderScopeChips(){
+  const box = document.getElementById('scope-chips'); box.replaceChildren();
+  G.modules.forEach(m => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', S.scope.has(m) ? 'true' : 'false'); b.textContent = m; const n = document.createElement('span'); n.className = 'n'; n.textContent = G.modInfo.get(m).files; b.appendChild(n); b.addEventListener('click', () => { if (S.scope.has(m)) S.scope.delete(m); else S.scope.add(m); renderScopeChips(); renderFileGraph(); }); box.appendChild(b); });
+}
+
+// ---------- traversal (server-side walk over the edge table) ----------
+let travResult = null;
+async function runTraverse(userTriggered){
+  const W = 980, H = 680, rs = rLoc();
+  const svg = d3.select('#trav-svg').attr('viewBox', `0 0 ${W} ${H}`).attr('class', 'graph-svg by-' + S.colorBy);
+  svg.selectAll('*').remove(); svg.on('.zoom', null);
+  const cnt = document.getElementById('trav-count'); document.getElementById('trav-depth-val').textContent = S.trav.depth;
+  renderLegend('trav-legend', 'Thick ring: start page. Solid arrows: the edges the walk followed. Faint: other references among the pages reached.');
+  const empty = msg => { svg.append('text').attr('class', 'empty').attr('x', W/2).attr('y', H/2).attr('text-anchor', 'middle').text(msg); cnt.textContent = ''; travResult = null; };
+  if (!S.trav.start || !G.byId.has(S.trav.start)) return empty('Type a start page above, or use "Traverse from here" on any page.');
+  const start = G.byId.get(S.trav.start);
+  const rel = S.kind === 'all' ? '' : `&rel_types=${S.kind}`; const ex = hubs.length ? `&exclude=${hubs.join(',')}` : '';
+  addMarkers(svg.append('defs'), [['tarr', 'arrow', 8, 7], ['tarr-on', 'arrow-on', 8, 7]]);
+  const root = svg.append('g'); svg.call(d3.zoom().scaleExtent([0.3, 6]).on('zoom', ev => root.attr('transform', ev.transform)));
+  try {
+    if (S.trav.to && G.byId.has(S.trav.to)) {
+      const res = await api(`/${encodeURIComponent(S.project)}/path?from=${S.trav.start}&to=${S.trav.to}${rel}${ex}`);
+      travResult = { kind: 'path', res };
+      if (!res.found) { empty('No reference chain between these two pages.'); travResult = { kind: 'path', res }; if (userTriggered) select({ type: 'trav' }); return; }
+      drawPath(root, W, H, res); cnt.textContent = `${res.hops} hop${res.hops === 1 ? '' : 's'} ${res.direction === 'down' ? 'following references' : res.direction === 'up' ? 'against the reference direction' : 'ignoring direction'}.`;
+    } else {
+      const res = await api(`/${encodeURIComponent(S.project)}/traverse?start=${S.trav.start}&direction=${S.trav.dir}&depth=${S.trav.depth}${rel}${ex}`);
+      travResult = { kind: 'walk', res };
+      drawRings(root, W, H, res, rs); const mods = new Set(res.nodes.filter(n => n.id !== start.id).map(n => n.module));
+      cnt.textContent = `${fmt(res.nodes.length - 1)} pages reached within ${res.depth} hop${res.depth === 1 ? '' : 's'} across ${mods.size} module${mods.size === 1 ? '' : 's'}.`;
+    }
+    if (userTriggered) select({ type: 'trav' });
+  } catch (err) { empty('Traversal failed: ' + err.message); }
+}
+function drawRings(root, W, H, res, rs){
+  const cx = W/2, cy = H/2, D = d3.max(res.nodes, n => n.depth) || 0, step = D ? (Math.min(W, H)/2 - 50)/D : 0;
+  const byId = new Map(res.nodes.map(n => [n.id, n])); const pos = new Map(); pos.set(res.start, { x: cx, y: cy, a: 0 });
+  for (let d = 1; d <= D; d++) {
+    const ring = res.nodes.filter(n => n.depth === d).sort((a, b) => ((pos.get(a.parent_id) || {a: 0}).a - (pos.get(b.parent_id) || {a: 0}).a) || a.module.localeCompare(b.module) || a.file.localeCompare(b.file));
+    ring.forEach((n, i) => { const a = -Math.PI/2 + i*2*Math.PI/ring.length; pos.set(n.id, { x: cx + step*d*Math.cos(a), y: cy + step*d*Math.sin(a), a }); });
+    root.append('circle').attr('class', 'ring').attr('cx', cx).attr('cy', cy).attr('r', step*d);
+    // Label sits just inside the ring at the upper-left, where node labels (which point outward) do not reach.
+    root.append('text').attr('class', 'ring-label').attr('x', cx - (step*d - 14)*Math.SQRT1_2).attr('y', cy - (step*d - 14)*Math.SQRT1_2).attr('text-anchor', 'middle').text(d === 1 ? '1 hop' : `${d} hops`);
+  }
+  const tree = new Set(res.nodes.map(n => n.via_edge_id).filter(Boolean));
+  const links = res.edges.filter(e => pos.has(e.source) && pos.has(e.target));
+  root.append('g').selectAll('line').data(links).join('line').attr('class', e => 'link' + (tree.has(e.id) ? ' on' : ' faint')).attr('marker-end', e => tree.has(e.id) ? 'url(#tarr-on)' : 'url(#tarr)')
+    .each(function(e){ const s = pos.get(e.source), t = pos.get(e.target), rs_ = rs(byId.get(e.source).loc), rt = rs(byId.get(e.target).loc); const dx = t.x - s.x, dy = t.y - s.y, L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L; d3.select(this).attr('x1', s.x + ux*rs_).attr('y1', s.y + uy*rs_).attr('x2', t.x - ux*(rt + 4)).attr('y2', t.y - uy*(rt + 4)); });
+  const data = res.nodes.map(n => ({ id: n.id, n, r: Math.max(4, rs(n.loc)) }));
+  root.append('g').selectAll('circle').data(data).join('circle').attr('class', d => nodeClass(d, d.id === res.start ? ' start' : '')).attr('r', d => d.r).attr('cx', d => pos.get(d.id).x).attr('cy', d => pos.get(d.id).y)
+    .on('pointerenter', (ev, d) => showTip(ev, d.n.file, [['module', d.n.module], ['hops from start', d.n.depth], ['reached via', d.n.parent_id ? byId.get(d.n.parent_id).file : '—'], ['layer', d.n.layer || 'unknown'], ['risk', d.n.risk || 'unknown']]))
+    .on('pointermove', moveTip).on('pointerleave', hideTip).on('click', (ev, d) => { ev.stopPropagation(); select({ type: 'file', id: d.id }); });
+  const ring1 = res.nodes.filter(n => n.depth === 1).length; const showAll = res.nodes.length <= 70;
+  root.append('g').selectAll('text').data(data.filter(d => showAll || d.id === res.start || (d.n.depth === 1 && ring1 <= 36))).join('text').attr('class', 'flabel').text(d => d.n.file)
+    .attr('x', d => { const p = pos.get(d.id); return d.id === res.start ? p.x : p.x + Math.cos(p.a)*(d.r + 4); }).attr('y', d => { const p = pos.get(d.id); return d.id === res.start ? p.y + d.r + 12 : p.y + Math.sin(p.a)*(d.r + 4) + 3.5; })
+    .attr('text-anchor', d => { const p = pos.get(d.id); if (d.id === res.start) return 'middle'; const c = Math.cos(p.a); return c > 0.2 ? 'start' : c < -0.2 ? 'end' : 'middle'; });
+}
+function drawPath(root, W, H, res){
+  const p = res.nodes, perRow = 5, gapX = (W - 160)/(perRow - 1), rowH = 130, rows = Math.ceil(p.length/perRow), yOff = (H - (rows - 1)*rowH)/2;
+  const pos = p.map((n, i) => { const row = Math.floor(i/perRow); let col = i % perRow; if (row % 2 === 1) col = perRow - 1 - col; return { x: 80 + col*gapX, y: yOff + row*rowH }; });
+  const byId = new Map(p.map(n => [n.id, n]));
+  res.edges.forEach((e, i) => { const si = p.findIndex(n => n.id === e.source), ti = p.findIndex(n => n.id === e.target); if (si < 0 || ti < 0) return; const s = pos[si], t = pos[ti]; const dx = t.x - s.x, dy = t.y - s.y, L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L;
+    root.append('line').attr('class', 'link on').attr('marker-end', 'url(#tarr-on)').attr('x1', s.x + ux*11).attr('y1', s.y + uy*11).attr('x2', t.x - ux*15).attr('y2', t.y - uy*15);
+    const ev = (e.evidence || '').replace(/\s+/g, ' '); root.append('text').attr('class', 'hop-label').attr('x', (s.x + t.x)/2).attr('y', (s.y + t.y)/2 - 8 + (Math.abs(dy) > 10 ? 0 : 0)).attr('text-anchor', 'middle').text(ev.length > 42 ? ev.slice(0, 40) + '…' : ev); });
+  const data = p.map(n => ({ id: n.id, n, r: 9 }));
+  root.append('g').selectAll('circle').data(data).join('circle').attr('class', (d, i) => nodeClass(d, i === 0 ? ' start' : '')).attr('r', 9).attr('cx', (d, i) => pos[i].x).attr('cy', (d, i) => pos[i].y)
+    .on('pointerenter', (ev, d) => showTip(ev, d.n.file, [['module', d.n.module], ['layer', d.n.layer || 'unknown'], ['risk', d.n.risk || 'unknown']])).on('pointermove', moveTip).on('pointerleave', hideTip).on('click', (ev, d) => select({ type: 'file', id: d.id }));
+  root.append('g').selectAll('text').data(data).join('text').attr('class', 'hop-name').attr('text-anchor', 'middle').attr('x', (d, i) => pos[i].x).attr('y', (d, i) => pos[i].y + 24).text(d => d.n.file);
+  root.append('g').selectAll('text').data(data).join('text').attr('class', 'hop-label').attr('text-anchor', 'middle').attr('x', (d, i) => pos[i].x).attr('y', (d, i) => pos[i].y + 38).text(d => d.n.module);
+}
+
+// ---------- tables ----------
+function renderTable(){
+  const q = S.tblFilter.trim().toLowerCase();
+  const ptb = document.querySelector('#pair-table tbody'); ptb.replaceChildren(); const pf = document.createDocumentFragment();
+  pairList.filter(p => p.a !== p.b && (!q || p.a.toLowerCase().includes(q) || p.b.toLowerCase().includes(q))).sort((x, y) => y.c - x.c).forEach(p => { const tr = document.createElement('tr'); [p.a, p.b].forEach(m => { const td = document.createElement('td'); td.appendChild(linkBtn(m, () => select({ type: 'module', id: m }))); tr.appendChild(td); }); const td = document.createElement('td'); td.className = 'num'; td.appendChild(linkBtn(fmt(p.c), () => select({ type: 'pair', a: p.a, b: p.b }))); tr.appendChild(td); pf.appendChild(tr); });
+  ptb.appendChild(pf);
+  const etb = document.querySelector('#edge-table tbody'); etb.replaceChildren();
+  const rows = E.filter(e => { if (!q) return true; const a = G.byId.get(e.source), b = G.byId.get(e.target); return [a.file, b.file, a.module, b.module].some(s => s.toLowerCase().includes(q)); }).map(e => ({ e, a: G.byId.get(e.source), b: G.byId.get(e.target) })).sort((x, y) => x.a.file.localeCompare(y.a.file) || x.b.file.localeCompare(y.b.file));
+  document.getElementById('tbl-count').textContent = `${fmt(rows.length)} of ${fmt(E.length)} references`;
+  const ef = document.createDocumentFragment();
+  rows.forEach(({ e, a, b }) => { const tr = document.createElement('tr'); const c1 = document.createElement('td'); c1.className = 'mono'; c1.appendChild(linkBtn(a.file, () => select({ type: 'file', id: a.id }), true)); const c2 = document.createElement('td'); c2.textContent = a.module; const c3 = document.createElement('td'); c3.className = 'mono'; c3.appendChild(linkBtn(b.file, () => select({ type: 'file', id: b.id }), true)); const c4 = document.createElement('td'); c4.textContent = b.module; const c5 = document.createElement('td'); c5.textContent = KIND_LABEL[e.rel_type] || e.rel_type; const c6 = document.createElement('td'); c6.className = 'ev'; c6.textContent = e.evidence || ''; tr.append(c1, c2, c3, c4, c5, c6); ef.appendChild(tr); });
+  etb.appendChild(ef);
+}
+
+// ---------- detail panel ----------
+const det = document.getElementById('detail');
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function linkBtn(text, fn, mono){ const b = el('button', 'linkbtn' + (mono ? ' mono' : ''), text); b.type = 'button'; b.addEventListener('click', fn); return b; }
+function kv(pairs){ const dl = el('dl', 'kv'); pairs.forEach(([k, v]) => { dl.appendChild(el('dt', null, k)); const dd = el('dd'); if (v instanceof Node) dd.appendChild(v); else dd.textContent = v; dl.appendChild(dd); }); return dl; }
+function riskNode(r){ const s = el('span'); s.append(el('i', 'dot ' + (r || '')), document.createTextNode(r || 'unknown')); return s; }
+function countBy(arr, f){ const c = new Map(); arr.forEach(x => { const k = f(x); c.set(k, (c.get(k)||0)+1); }); return [...c.entries()].sort((a, b) => b[1] - a[1]); }
+function select(sel){ S.selected = sel; if (sel && sel.type === 'file') S.fileSel = sel.id; renderDetail(); if (fileView) fileView.applyPairHighlight(); }
+function renderDetail(){ det.replaceChildren(); const s = S.selected; if (!s) return showDefault(); if (s.type === 'module') return showModule(s.id); if (s.type === 'pair') return showPair(s.a, s.b); if (s.type === 'trav') return showTrav(); return showFile(s.id); }
+function showDefault(){
+  det.appendChild(el('div', 'kicker', 'Reading the map')); det.appendChild(el('h2', null, 'Pick a cell, module, link or page'));
+  det.appendChild(el('p', 'note', 'A reference means one page includes, redirects to, links to or posts to another, as recorded in its RED analysis. Edges live in graph_edges with extractor red_file_analyses; pages are ASPPage rows in graph_nodes.'));
+  det.appendChild(el('p', 'note', 'Menus and sign-out pages connect to almost everything. Set a hub threshold in the scope bar to drop them from every view and from the traversal.'));
+  det.appendChild(el('h3', null, 'Most connected pages')); const ul = el('ul', 'list');
+  [...deg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).forEach(([id, c]) => { const n = G.byId.get(id); const li = el('li'); li.appendChild(linkBtn(n.file, () => select({ type: 'file', id }), true)); li.appendChild(el('span', 'n', `${fmt(c)} · ${n.module}`)); ul.appendChild(li); });
+  det.appendChild(ul);
+}
+function showModule(m){
+  const files = G.filesByMod.get(m) || [], info = G.modInfo.get(m) || { files: 0, loc: 0 };
+  det.appendChild(el('div', 'kicker', 'Module')); det.appendChild(el('h2', null, m));
+  const outPairs = pairList.filter(p => p.a === m && p.b !== m).sort((x, y) => y.c - x.c), inPairs = pairList.filter(p => p.b === m && p.a !== m).sort((x, y) => y.c - x.c);
+  det.appendChild(kv([['Pages', fmt(info.files)], ['Lines of code', fmt(info.loc)], ['Layers', countBy(files, f => f.layer || 'unknown').map(([k, v]) => `${k} ${v}`).join(', ')], ['Risk', countBy(files, f => f.risk || 'unknown').map(([k, v]) => `${k} ${v}`).join(', ')], ['References out', fmt(outPairs.reduce((s, p) => s + p.c, 0))], ['References in', fmt(inPairs.reduce((s, p) => s + p.c, 0))], ['Inside module', fmt(pairCount(m, m))]]));
+  const row = el('div', 'btnrow'); const b = el('button', 'btn primary', 'Show pages in graph'); b.type = 'button'; b.addEventListener('click', () => { S.scope = new Set([m]); S.neighbours = true; S.hideIntra = false; syncFileControls(); switchTab('files'); renderFileGraph(); }); row.appendChild(b); det.appendChild(row);
+  const partners = (title, pairs, dir) => { det.appendChild(el('h3', null, title)); if (!pairs.length) { det.appendChild(el('p', 'note', 'None')); return; } const ul = el('ul', 'list'); pairs.slice(0, 10).forEach(p => { const li = el('li'); li.appendChild(linkBtn(dir === 'out' ? p.b : p.a, () => select({ type: 'pair', a: p.a, b: p.b }))); li.appendChild(el('span', 'n', fmt(p.c))); ul.appendChild(li); }); det.appendChild(ul); };
+  partners('Depends on', outPairs, 'out'); partners('Depended on by', inPairs, 'in');
+  det.appendChild(el('h3', null, 'Pages')); const ul = el('ul', 'list'); files.slice().sort((a, b) => a.file.localeCompare(b.file)).forEach(f => { const li = el('li'); li.appendChild(linkBtn(f.file, () => select({ type: 'file', id: f.id }), true)); li.appendChild(el('span', 'n', `${fmt(deg.get(f.id) || 0)} refs`)); ul.appendChild(li); }); det.appendChild(ul);
+}
+function showPair(a, b){
+  const es = pairEdges(a, b);
+  det.appendChild(el('div', 'kicker', 'Module link')); det.appendChild(el('h2', null, `${a} → ${b}`));
+  det.appendChild(kv([['References', fmt(es.length)], ['Reverse direction', (() => { const n = pairCount(b, a); return n ? linkBtn(`${fmt(n)} (${b} → ${a})`, () => select({ type: 'pair', a: b, b: a })) : '0'; })()]]));
+  const row = el('div', 'btnrow'); const btn = el('button', 'btn primary', 'Open in file graph'); btn.type = 'button'; btn.addEventListener('click', () => { S.scope = new Set([a, b]); S.neighbours = false; S.hideIntra = a !== b; syncFileControls(); switchTab('files'); renderFileGraph(); }); row.appendChild(btn); det.appendChild(row);
+  det.appendChild(el('h3', null, 'Pages behind this link')); const ul = el('ul', 'edgelist');
+  es.slice().sort((x, y) => G.byId.get(x.target).file.localeCompare(G.byId.get(y.target).file)).forEach(e => { const sa = G.byId.get(e.source), tb = G.byId.get(e.target); const li = el('li'); li.appendChild(linkBtn(sa.file, () => select({ type: 'file', id: sa.id }), true)); li.appendChild(document.createTextNode(' → ')); li.appendChild(linkBtn(tb.file, () => select({ type: 'file', id: tb.id }), true)); if (e.evidence && e.evidence !== tb.file) li.appendChild(el('span', 'ev', e.evidence)); ul.appendChild(li); });
+  det.appendChild(ul);
+}
+async function showFile(id){
+  const n = G.byId.get(id); if (!n) return showDefault();
+  det.appendChild(el('div', 'kicker', 'Page')); det.appendChild(el('h2', 'mono', n.file));
+  det.appendChild(kv([['Module', linkBtn(n.module, () => select({ type: 'module', id: n.module }))], ['Layer', n.layer || 'unknown'], ['Risk', riskNode(n.risk)], ['Lines of code', fmt(n.loc)], ['Complexity', `${n.complexity} (cyclomatic ${n.cyclomatic})`], ['Business rules', fmt(n.rules)], ['Security findings', `${n.security.critical || 0} critical, ${n.security.high || 0} high`], ['Domain', n.domain || 'unknown'], ['Node id', String(n.id)]]));
+  const row = el('div', 'btnrow');
+  const b1 = el('button', 'btn primary', 'Traverse from here'); b1.type = 'button'; b1.addEventListener('click', () => { S.trav.start = id; S.trav.to = null; document.getElementById('trav-start').value = fileKey(n); document.getElementById('trav-to').value = ''; switchTab('trav'); runTraverse(true); });
+  const b2 = el('button', 'btn', 'Focus in file graph'); b2.type = 'button'; b2.addEventListener('click', () => focusFile(id));
+  row.append(b1, b2); det.appendChild(row);
+  const loading = el('p', 'note', 'Loading details from the table…'); det.appendChild(loading);
+  let d; try { d = await api(`/${encodeURIComponent(S.project)}/nodes/${id}`); } catch (err) { loading.textContent = 'Could not load details: ' + err.message; return; }
+  if (!S.selected || S.selected.type !== 'file' || S.selected.id !== id) return;
+  loading.remove();
+  det.appendChild(el('p', 'purpose', d.node.purpose || 'No purpose recorded.'));
+  const grouped = (title, edges, pick) => { const pages = edges.filter(e => e.other.label === 'ASPPage'); det.appendChild(el('h3', null, `${title} (${pages.length})`)); if (!pages.length) { det.appendChild(el('p', 'note', 'None')); return; } const byMod = d3.group(pages, e => e.other.module || ''); [...byMod.keys()].sort().forEach(m => { const g = el('div', 'modgroup'); const h = el('div', 'mg'); h.appendChild(linkBtn(m, () => select({ type: 'module', id: m }))); g.appendChild(h); const ul = el('ul', 'list'); byMod.get(m).sort((x, y) => x.other.name.localeCompare(y.other.name)).forEach(e => { const li = el('li'); const node = G.byId.get(e.other.id); li.appendChild(linkBtn(node ? node.file : e.other.name, () => select({ type: 'file', id: e.other.id }), true)); li.appendChild(el('span', 'n', KIND_LABEL[e.rel_type] || e.rel_type)); ul.appendChild(li); }); g.appendChild(ul); det.appendChild(g); }); };
+  grouped('References', d.outgoing); grouped('Referenced by', d.incoming);
+  det.appendChild(el('h3', null, `Tables (${d.node.tables.length})`)); const ch = el('div', 'chips'); d.node.tables.slice(0, 16).forEach(t => ch.appendChild(el('span', 'chip static mono', t))); if (d.node.tables.length > 16) ch.appendChild(el('span', 'chip static', `+${d.node.tables.length - 16} more`)); det.appendChild(ch);
+  det.appendChild(el('h3', null, `Shared includes (${d.node.includes.length})`)); const ch2 = el('div', 'chips'); d.node.includes.forEach(t => ch2.appendChild(el('span', 'chip static mono', t))); det.appendChild(ch2);
+}
+function showTrav(){
+  const r = travResult; if (!r) return showDefault();
+  if (r.kind === 'path') {
+    const res = r.res, a = G.byId.get(res.from), b = G.byId.get(res.to);
+    det.appendChild(el('div', 'kicker', 'Reference chain')); det.appendChild(el('h2', 'mono', `${a.file} → ${b.file}`));
+    if (!res.found) { det.appendChild(el('p', 'note', 'No chain of references connects these two pages, in either direction, within 8 hops.')); return; }
+    det.appendChild(kv([['Hops', String(res.hops)], ['Direction', res.direction === 'down' ? 'following references' : res.direction === 'up' ? 'against references' : 'ignoring direction']]));
+    det.appendChild(el('h3', null, 'Hops')); const ul = el('ul', 'edgelist');
+    res.edges.forEach(e => { const s = G.byId.get(e.source), t = G.byId.get(e.target); const li = el('li'); li.appendChild(linkBtn(s.file, () => select({ type: 'file', id: s.id }), true)); li.appendChild(document.createTextNode(' → ')); li.appendChild(linkBtn(t.file, () => select({ type: 'file', id: t.id }), true)); li.appendChild(el('span', 'ev', `${KIND_LABEL[e.rel_type] || e.rel_type}${e.evidence ? ' · ' + e.evidence : ''}`)); ul.appendChild(li); });
+    det.appendChild(ul); return;
+  }
+  const res = r.res, start = G.byId.get(res.start);
+  det.appendChild(el('div', 'kicker', 'Traversal')); det.appendChild(el('h2', 'mono', start.file));
+  const reached = res.nodes.filter(n => n.id !== res.start);
+  det.appendChild(kv([['Direction', res.direction === 'down' ? 'downstream (what it uses)' : res.direction === 'up' ? 'upstream (what uses it)' : 'both'], ['Depth', String(res.depth)], ['Pages reached', fmt(reached.length)], ['Edges followed', fmt(res.edges.length)]]));
+  det.appendChild(el('h3', null, 'Modules touched')); const ul0 = el('ul', 'list'); countBy(reached, n => n.module).forEach(([m, c]) => { const li = el('li'); li.appendChild(linkBtn(m, () => select({ type: 'module', id: m }))); li.appendChild(el('span', 'n', fmt(c))); ul0.appendChild(li); }); det.appendChild(ul0);
+  const D = d3.max(reached, n => n.depth) || 0;
+  for (let d = 1; d <= D; d++) { const ring = reached.filter(n => n.depth === d); det.appendChild(el('h3', null, `${d} hop${d === 1 ? '' : 's'} (${ring.length})`)); const ul = el('ul', 'list'); ring.sort((a, b) => a.module.localeCompare(b.module) || a.file.localeCompare(b.file)).forEach(n => { const li = el('li'); li.appendChild(linkBtn(n.file, () => select({ type: 'file', id: n.id }), true)); li.appendChild(el('span', 'n', n.module)); ul.appendChild(li); }); det.appendChild(ul); }
+}
+function focusFile(id){ const n = G.byId.get(id); if (!n) return; if (!S.scope.has(n.module)) S.scope.add(n.module); S.fileSel = id; S.selected = { type: 'file', id }; syncFileControls(); switchTab('files'); renderFileGraph(); renderDetail(); }
+
+// ---------- tabs, controls, boot ----------
+function switchTab(name){ S.tab = name; document.querySelectorAll('.tabs [role=tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false')); ['matrix', 'modgraph', 'files', 'trav', 'table'].forEach(t => { document.getElementById('view-' + t).hidden = t !== name; }); }
+function syncFileControls(){ renderScopeChips(); document.getElementById('opt-neigh').checked = S.neighbours; document.getElementById('opt-intra').checked = S.hideIntra; document.getElementById('opt-color').value = S.colorBy; }
+function renderAll(){ recompute(); renderStats(); renderMatrix(); renderModGraph(); renderFileGraph(); runTraverse(false); renderTable(); renderDetail(); }
+
+document.querySelectorAll('.tabs [role=tab]').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+document.getElementById('f-kind').addEventListener('change', ev => { S.kind = ev.target.value; renderAll(); });
+document.getElementById('f-hub').addEventListener('change', ev => { const v = parseInt(ev.target.value, 10); S.hub = Number.isFinite(v) && v > 0 ? v : null; if (!S.hub) ev.target.value = ''; renderAll(); });
+document.getElementById('mod-min').addEventListener('input', ev => { S.minMod = parseInt(ev.target.value, 10) || 1; renderModGraph(); });
+document.getElementById('scope-all').addEventListener('click', () => { S.scope = new Set(G.modules); renderScopeChips(); renderFileGraph(); });
+document.getElementById('scope-none').addEventListener('click', () => { S.scope = new Set(); renderScopeChips(); renderFileGraph(); });
+document.getElementById('opt-neigh').addEventListener('change', ev => { S.neighbours = ev.target.checked; renderFileGraph(); });
+document.getElementById('opt-intra').addEventListener('change', ev => { S.hideIntra = ev.target.checked; renderFileGraph(); });
+document.getElementById('opt-color').addEventListener('change', ev => { S.colorBy = ev.target.value; renderFileGraph(); runTraverse(false); });
+document.getElementById('file-search').addEventListener('change', ev => { const hit = resolveFile(ev.target.value); if (hit) { focusFile(hit.id); ev.target.value = ''; } });
+document.getElementById('tbl-filter').addEventListener('input', ev => { S.tblFilter = ev.target.value; renderTable(); });
+document.getElementById('trav-start').addEventListener('change', ev => { const hit = resolveFile(ev.target.value); S.trav.start = hit ? hit.id : null; if (hit) ev.target.value = fileKey(hit); runTraverse(true); });
+document.getElementById('trav-to').addEventListener('change', ev => { const hit = resolveFile(ev.target.value); S.trav.to = hit ? hit.id : null; if (hit) ev.target.value = fileKey(hit); runTraverse(true); });
+document.getElementById('trav-dir').addEventListener('change', ev => { S.trav.dir = ev.target.value; runTraverse(true); });
+document.getElementById('trav-depth').addEventListener('input', ev => { S.trav.depth = parseInt(ev.target.value, 10) || 1; runTraverse(true); });
+document.getElementById('trav-clear').addEventListener('click', () => { S.trav.start = null; S.trav.to = null; document.getElementById('trav-start').value = ''; document.getElementById('trav-to').value = ''; runTraverse(false); select(null); });
+document.getElementById('f-project').addEventListener('change', ev => { S.project = ev.target.value; loadProject(S.project).catch(err => setStatus('Could not load project: ' + err.message, true)); });
+document.getElementById('btn-build').addEventListener('click', async ev => { if (!S.project) return; const btn = ev.currentTarget; btn.disabled = true; setStatus(`Rebuilding ${S.project} from red_file_analyses…`); try { const st = await api(`/${encodeURIComponent(S.project)}/build`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: '{}' }); setStatus(`Rebuilt: ${fmt(st.nodes)} pages, ${fmt(st.edges)} page-to-page edges, ${fmt(st.edges_written)} rows written.`); await loadProject(S.project); } catch (err) { setStatus('Rebuild failed: ' + err.message, true); } finally { btn.disabled = false; } });
+
+(async function boot(){
+  try {
+    const res = await api('/projects'); const sel = document.getElementById('f-project'); sel.replaceChildren();
+    const items = res.items || [];
+    if (!items.length) { setStatus('No projects found in red_file_analyses or the graph tables.', true); return; }
+    items.forEach(p => { const o = document.createElement('option'); o.value = p.project_id; o.textContent = `${p.project_id}${p.name ? ' · ' + p.name : ''} (${fmt(p.pages)} pages, ${fmt(p.edges)} edges${p.pages ? '' : ', not built'})`; sel.appendChild(o); });
+    // Deep link: #project[/tab[/start page[/path-to page]]], e.g. #proj_0059/trav/accaddbusinessline.asp
+    const [hPid, hTab, hStart, hTo] = location.hash.replace('#', '').split('/').map(decodeURIComponent);
+    const pick = items.find(p => p.project_id === hPid) || items.slice().sort((a, b) => b.pages - a.pages)[0];
+    sel.value = pick.project_id; S.project = pick.project_id;
+    if (!pick.pages) { setStatus(`${pick.project_id} has analyses but no graph yet. Press "Rebuild from table" to build it.`); switchTab('matrix'); return; }
+    await loadProject(S.project);
+    if (hTab && document.getElementById('view-' + hTab)) switchTab(hTab);
+    const startNode = hStart ? resolveFile(hStart) : null, toNode = hTo ? resolveFile(hTo) : null;
+    if (startNode) {
+      S.trav.start = startNode.id; S.trav.to = toNode ? toNode.id : null;
+      document.getElementById('trav-start').value = fileKey(startNode); document.getElementById('trav-to').value = toNode ? fileKey(toNode) : '';
+      if (!hTab) switchTab('trav');
+      await runTraverse(true);
+    }
+  } catch (err) { setStatus('Could not reach the RED graph API: ' + err.message, true); }
+})();
+})();
+</script>
+</body>
+</html>

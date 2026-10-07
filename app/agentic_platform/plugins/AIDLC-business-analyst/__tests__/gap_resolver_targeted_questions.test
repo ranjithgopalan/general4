@@ -1,0 +1,23 @@
+=== TEST: Gap Resolver - Targeted Questions and Content Integration ===
+DESCRIPTION: Tests the gap-resolver skill's ability to detect invocation mode (workflow vs standalone), discover gaps from gap_report.json or BRD.md Section 12, ask targeted questions based on gap type (missing metrics, incomplete business rules, missing stakeholder info, undefined terms), validate user responses, format content appropriately, integrate at logical insertion points, and update confirmedSections or BRD.md file.
+
+--- ACCEPTANCE CRITERIA ---
+**Interactive Gap Resolution with Targeted Questions.** Given gaps from ba-brd workflow or standalone BRD.md, when gap-resolver skill is invoked, then it must: (1) detect invocation mode by checking for .claude/GATHER-business-analyst/gap-reports/latest-gap-report.json file, (2) IF WORKFLOW MODE: read gap_report.json and confirmedSections from ba-brd Step 5a, (3) IF STANDALONE MODE: ask user for BRD path, parse Section 12 table for gaps with status != "Resolved", extract all BRD sections into sectionContentMap, (4) classify gaps by type (missing_metrics, incomplete_business_rule, missing_stakeholder_info, undefined_term, general_missing_content), (5) prioritize by severity (critical → important → nice_to_have), (6) for each gap: build targeted question with examples using AskUserQuestion (metrics need numbers + units, business rules need IF-THEN logic, stakeholders need responsibilities), (7) validate user responses (metrics must include measurable values, rules must include validation logic), (8) format content for section type (business rules → structured format, stakeholders → bullet list, metrics → metric format), (9) find logical insertion point in section content, (10) IN WORKFLOW MODE: update confirmedSections in memory, (11) IN STANDALONE MODE: update sectionContentMap, rewrite BRD.md, update Section 12 table with "Resolved" status, (12) generate resolution summary with count and details.
+
+--- PROMPT ---
+Skill: GATHER-business-analyst:gap-resolver
+
+Resolve gaps in the BRD that was just generated.
+
+--- PROMPT 2 ---
+Reduce processing time from 7 days to 24 hours by Q2 2026, achieve 98% accuracy rate, decrease cost per invoice by $11.50
+
+--- PROMPT 3 ---
+Rule: Invoice total must equal sum of line items plus tax. Validation: IF ABS(Total - (LineItems + Tax)) > $1 THEN reject. Error: 'Invoice total mismatch - please verify calculations'
+
+--- PROMPT 4 ---
+Accounts Payable Team Manager - responsible for approving invoices over $10K, concerned with fraud prevention, success measured by reduction in payment errors
+
+--- EXPECTED KEYWORDS ---
+gap-resolver, invocation mode detection, workflow mode, standalone mode, .claude/GATHER-business-analyst/gap-reports, latest-gap-report.json, confirmedSections, AskUserQuestion, BRD path, Section 12, parse table, sectionContentMap, gap classification, missing_metrics, incomplete_business_rule, missing_stakeholder_info, undefined_term, prioritize, critical, important, nice_to_have, targeted question, examples, validation, numbers + units, IF-THEN logic, responsibilities, format content, structured format, bullet list, metric format, logical insertion point, update confirmedSections, update sectionContentMap, rewrite BRD.md, Section 12 update, Resolved status, resolution summary
+--- END TEST ---

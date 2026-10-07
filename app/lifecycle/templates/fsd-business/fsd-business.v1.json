@@ -1,0 +1,20 @@
+{
+  "template_id": "aig-fsd-business",
+  "template_version": "v1",
+  "title": "Functional Specification Document — Business View",
+  "artifact_type": "fsd-business",
+  "sections": [
+    { "key": "context_summary",        "title": "1. Project Context & Background",              "kind": "data" },
+    { "key": "scope",                   "title": "2. Scope (New / Enhancement / Existing)",      "kind": "data" },
+    { "key": "functional_requirements", "title": "3. Functional Requirements (as-is → to-be)",  "kind": "data" },
+    { "key": "process_flows",           "title": "4. Process Flows",                            "kind": "data" },
+    { "key": "screen_specs",            "title": "5. Screen Specifications",                    "kind": "data" },
+    { "key": "business_rules",          "title": "6. Business Rules",                           "kind": "data" },
+    { "key": "data_model",              "title": "7. Data Model Impact",                        "kind": "data" },
+    { "key": "integration_points",      "title": "8. Integration Points",                       "kind": "data" },
+    { "key": "non_functional_reqs",     "title": "9. Non-Functional Requirements",              "kind": "data" },
+    { "key": "acceptance_criteria",     "title": "10. Acceptance Criteria",                     "kind": "data" },
+    { "key": "open_items",              "title": "11. Open Items",                              "kind": "data" },
+    { "key": "references",              "title": "12. References",                              "kind": "data" }
+  ]
+}

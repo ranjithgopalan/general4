@@ -1,0 +1,65 @@
+=== TEST: Evidence-Based Gap Reporting ===
+DESCRIPTION: Validates that every identified gap includes source evidence, confidence level, and recommended action
+RALLY: US772459
+
+--- ACCEPTANCE CRITERIA ---
+## US772459: Evidence-based gap reporting
+
+**As a** Business Analyst,
+**I want** every identified gap to include source evidence and confidence level,
+**So that** I can efficiently verify and address real gaps.
+
+### Acceptance Criteria
+- Each gap cites source document location (page/section)
+- Each gap shows expected artifact location
+- Confidence level (HIGH/MEDIUM/LOW) assigned to each gap
+- Search terms used for matching are displayed
+- Recommended action provided for each gap
+
+### Tasks
+- **TA2174983**: Design gap report format - Create structured gap report template. Define markdown format with source location, expected artifact, confidence level, impact, and recommendation fields.
+- **TA2174984**: Implement confidence scoring - Assign confidence levels to each finding. HIGH: explicit requirement, no match. MEDIUM: partial match or ambiguous. LOW: implicit requirement, needs interpretation.
+- **TA2174985**: Add HITL guidance - Include human review instructions in reports. Add disclaimer about LLM limitations, confidence explanation, and explicit "Human Action Required" flags.
+
+**Output Evaluation**: When scoring, examine each gap entry in the report to verify it contains: source location, expected artifact location, confidence level (HIGH/MEDIUM/LOW), search terms used, and recommended action.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate requirements with detailed evidence-based gap reporting.
+
+**Ground Truth Document:**
+- EPIC Definition: `__tests__/.inputs/mock-epic-definition.md`
+
+**Target Artifacts:**
+- Feature Documents: `__tests__/.inputs/mock-features/`
+
+Please validate the EPIC capabilities against the Feature documents and generate a gap report where each identified gap MUST include:
+
+1. **Source Document Location**: Exact section in the EPIC document (e.g., "Capabilities → C4: Stories to Code Traceability")
+
+2. **Expected Artifact Location**: Where the coverage should be found (e.g., "mock-features/F006-traceability.md")
+
+3. **Confidence Level** with explanation:
+   - HIGH: Explicit capability with no corresponding feature document
+   - MEDIUM: Partial coverage or ambiguous mapping
+   - LOW: Implicit requirement that may be covered indirectly
+
+4. **Search Terms Used**: List the terms searched for (e.g., "traceability", "code reference", "story ID")
+
+5. **Recommended Action**: Specific next step (e.g., "Create F006-traceability.md to address C4 capability")
+
+6. **Human Action Required** flag for each gap
+
+Include a disclaimer section about:
+- LLM limitations in semantic matching
+- The need for human verification of all findings
+- The ~70-80% reliability of unstructured text comparison
+
+--- PROMPT 2 ---
+Write the generated gap report to the folder .outputs/gap_reporting/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, gap, evidence, source location, expected artifact, confidence, HIGH, MEDIUM, LOW, search terms, recommendation, Human Action Required, disclaimer, LLM limitations, HITL, verification
+
+--- END TEST ---

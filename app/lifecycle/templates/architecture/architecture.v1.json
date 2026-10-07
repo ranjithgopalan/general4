@@ -1,0 +1,21 @@
+{
+  "template_id": "aig-srd",
+  "template_version": "v1",
+  "title": "System Requirements Document",
+  "artifact_type": "srd",
+  "sections": [
+    { "key": "system_context",          "title": "1. System Context & Architecture Narrative",      "kind": "llm",   "max_words": 300  },
+    { "key": "scope_definition",        "title": "2. Scope (IN / OUT / DEFERRED)",                  "kind": "data",  "max_words": null },
+    { "key": "functional_requirements", "title": "3. Functional Requirements (from FSD)",            "kind": "data",  "max_words": null },
+    { "key": "component_design",        "title": "4. Component Design (SYS-*/CMP-* nodes)",         "kind": "mixed", "max_words": null },
+    { "key": "integration_design",      "title": "5. Integration Design (INT-*/API-* nodes)",       "kind": "data",  "max_words": null },
+    { "key": "sequence_diagrams",       "title": "6. Sequence Diagrams (per story — Mermaid DSL)", "kind": "mixed", "max_words": null },
+    { "key": "non_functional_reqs",     "title": "7. Non-Functional Requirements",                  "kind": "mixed", "max_words": null },
+    { "key": "open_items",              "title": "8. Open Items & ARCH-TODO",                       "kind": "data",  "max_words": null },
+    { "key": "references",             "title": "9. References & Evidence",                         "kind": "data",  "max_words": null }
+  ],
+  "diagrams": [
+    { "key": "asIs_diagram",  "title": "AS-IS Architecture",  "kind": "mermaid", "source": "graph_walk" },
+    { "key": "toBe_diagram",  "title": "TO-BE Architecture",  "kind": "mermaid", "source": "llm_diff"   }
+  ]
+}

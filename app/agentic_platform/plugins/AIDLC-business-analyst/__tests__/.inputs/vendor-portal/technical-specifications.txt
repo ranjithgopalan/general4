@@ -1,0 +1,218 @@
+VENDOR PORTAL - TECHNICAL SPECIFICATIONS
+
+SYSTEM ARCHITECTURE
+===================
+
+Technology Stack:
+- Frontend: Angular 18 with Axis UI Framework v18.0.32
+- Backend: AWS Lambda with Node.js 20.x
+- API Gateway: REST API with OAuth 2.0
+- Database: Amazon DynamoDB
+- Storage: Amazon S3 for document storage
+- Authentication: AWS Cognito with MFA support
+
+Integration Points:
+- ERP System: SAP for PO validation and payment processing
+- Email Service: Amazon SES for notifications
+- Virus Scanning: ClamAV for document security
+- Audit Logging: CloudWatch Logs with 7-year retention
+
+DATA MODEL
+==========
+
+Vendor Entity:
+- vendor_id (primary key)
+- company_name
+- tax_id
+- address (street, city, state, zip)
+- contact_person
+- email
+- phone
+- bank_account_number (encrypted)
+- routing_number (encrypted)
+- status (pending, active, suspended, terminated)
+- created_date
+- approved_date
+- approved_by
+
+Invoice Entity:
+- invoice_id (primary key)
+- vendor_id (foreign key)
+- invoice_number
+- po_number
+- invoice_date
+- due_date
+- total_amount
+- tax_amount
+- line_items (array of objects)
+- status (submitted, under_review, approved, rejected, paid)
+- submission_date
+- approval_date
+- payment_date
+- documents (array of S3 keys)
+
+Document Entity:
+- document_id (primary key)
+- vendor_id (foreign key)
+- document_type (w9, insurance, diversity_cert, invoice_attachment)
+- file_name
+- s3_key
+- upload_date
+- expiration_date
+- status (active, expired, superseded)
+
+USER ROLES AND PERMISSIONS
+===========================
+
+Vendor Role:
+- View own profile and documents
+- Update contact information
+- Upload documents
+- Submit invoices
+- View invoice status and payment history
+- Send and receive messages
+
+Procurement Staff Role:
+- View all vendor profiles
+- Approve/reject vendor registrations
+- Request additional documentation
+- View invoice submissions
+- Send messages to vendors
+
+AP Staff Role:
+- View approved invoices
+- Process payments
+- Update payment status
+- Generate payment reports
+
+Admin Role:
+- All permissions
+- User management
+- System configuration
+- Audit log access
+
+WORKFLOWS
+=========
+
+Vendor Onboarding Workflow:
+1. Vendor submits registration form
+2. System validates required fields
+3. System sends verification email
+4. Vendor uploads required documents (W-9, insurance, etc.)
+5. System performs virus scan on documents
+6. Procurement team receives notification
+7. Procurement reviews and approves/rejects
+8. Vendor receives approval notification
+9. Account activated for invoice submission
+
+Invoice Submission Workflow:
+1. Vendor navigates to invoice submission page
+2. System validates vendor is approved and active
+3. Vendor enters PO number
+4. System validates PO exists and has available balance
+5. Vendor enters line items
+6. System calculates totals including tax
+7. Vendor uploads supporting documents
+8. System validates invoice total against PO amount (max 110%)
+9. System checks for duplicate invoice number
+10. System submits invoice for review
+11. AP staff receives notification
+12. AP staff reviews and approves/rejects
+13. Vendor receives status update notification
+14. Upon approval, payment scheduled per payment terms
+
+SECURITY REQUIREMENTS
+=====================
+
+Authentication:
+- Username/password with 12-character minimum
+- Password complexity requirements (upper, lower, number, special)
+- MFA required for financial transactions
+- Session timeout after 15 minutes of inactivity
+- Account lockout after 5 failed login attempts
+
+Data Protection:
+- TLS 1.3 for all communications
+- AES-256 encryption for sensitive data (bank account, tax ID)
+- Field-level encryption in DynamoDB
+- S3 bucket encryption at rest
+- Key management via AWS KMS
+
+Audit Requirements:
+- Log all authentication attempts
+- Log all document uploads and downloads
+- Log all invoice submissions and status changes
+- Log all payment transactions
+- Logs retained for 7 years for compliance
+
+PERFORMANCE REQUIREMENTS
+========================
+
+Response Time Targets:
+- Login: < 1 second
+- Dashboard load: < 2 seconds
+- Invoice submission: < 3 seconds
+- Document upload: < 5 seconds per file
+- Search results: < 2 seconds
+
+Scalability:
+- Support 1000 registered vendors
+- Handle 500 concurrent users
+- Process 200 invoice submissions per day
+- Store up to 100GB of documents
+
+Availability:
+- 99.5% uptime during business hours
+- Scheduled maintenance window: Sunday 2-6 AM EST
+- Maximum 4-hour RTO for critical failures
+- Daily backups at midnight EST
+
+MONITORING AND ALERTING
+========================
+
+CloudWatch Metrics:
+- API latency (p50, p95, p99)
+- Error rates by endpoint
+- Lambda function duration and memory usage
+- DynamoDB read/write capacity consumption
+- S3 storage utilization
+
+Alerts:
+- API error rate > 5%
+- Average response time > 3 seconds
+- Lambda function errors
+- DynamoDB throttling events
+- Failed backup notifications
+
+DEPLOYMENT
+==========
+
+Environment Strategy:
+- Development: dev.vendor-portal.internal
+- QA: qa.vendor-portal.internal
+- Staging: staging.vendor-portal.internal
+- Production: vendor-portal.company.com
+
+CI/CD Pipeline:
+- Source control: GitHub Enterprise
+- Build: GitHub Actions
+- Unit tests: Jest (80% coverage minimum)
+- Integration tests: automated test suite
+- Security scanning: Snyk for dependencies
+- Infrastructure: AWS SAM templates
+- Deployment: Blue/green deployment strategy
+
+DISASTER RECOVERY
+=================
+
+Backup Strategy:
+- DynamoDB: Point-in-time recovery enabled
+- S3: Versioning enabled with 30-day lifecycle
+- Database exports: Daily full backup to S3
+- Cross-region replication for critical data
+
+Recovery Procedures:
+- RTO: 4 hours
+- RPO: 24 hours
+- Documented runbook for system restoration
+- Quarterly DR testing

@@ -1,0 +1,56 @@
+=== TEST: Error Handling and Reporting ===
+DESCRIPTION: Validates clear error messages when files cannot be processed with partial results returned
+RALLY: US772463
+
+--- ACCEPTANCE CRITERIA ---
+## US772463: Error handling and reporting
+
+**As a** user,
+**I want** clear error messages when files cannot be processed,
+**So that** I can fix issues and continue validation.
+
+### Acceptance Criteria
+- File not found errors report path and suggest correction
+- Parse failures report specific page/section that failed
+- Unsupported formats list supported alternatives
+- Partial results returned when some files fail
+- No silent failures - all errors reported
+
+### Tasks
+- **TA2174993**: Implement file access error handling - Handle file access errors gracefully. Report file not found, permission denied, corrupted file with actionable guidance. Continue with other files.
+- **TA2174994**: Implement processing error handling - Handle parsing and processing errors. Report PDF parsing failures, Excel format issues, encoding problems. Provide partial results when possible.
+
+**Output Evaluation**: When scoring, verify that error messages are clear, actionable, include path information, and that partial results are provided even when some files fail.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate requirements with the following inputs. Some files may not exist or have issues:
+
+**Ground Truth Documents:**
+1. `__tests__/.inputs/mock-epic-definition.md` (EXISTS - valid markdown)
+2. `__tests__/.inputs/nonexistent-brd.pdf` (DOES NOT EXIST)
+3. `__tests__/.inputs/mock-features/F001-document-processing.md` (EXISTS - valid markdown)
+
+**Target Artifacts:**
+1. `__tests__/.inputs/mock-features/` (EXISTS - directory with feature files)
+2. `__tests__/.inputs/missing-stories/` (DOES NOT EXIST - directory)
+3. `__tests__/.inputs/mock-user-stories.md` (EXISTS - valid markdown)
+
+Please attempt validation and demonstrate proper error handling:
+
+1. **File Not Found Errors**: Report exact path for nonexistent files with suggestion to verify path
+2. **Directory Not Found**: Report when target directory doesn't exist
+3. **Partial Results**: Continue processing with available files and return results
+4. **Error Summary**: At the end, summarize all errors encountered
+5. **No Silent Failures**: Every error should be explicitly reported, not ignored
+
+The validation should still complete with partial results from the files that could be processed.
+
+--- PROMPT 2 ---
+Write the validation results including the error report to the folder .outputs/error_handling/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, error, file not found, path, nonexistent, partial results, continue, graceful, actionable, directory, summary, not exist, processed, available
+
+--- END TEST ---

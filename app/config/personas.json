@@ -1,0 +1,58 @@
+{
+  "personas": [
+    {
+      "id": "po",
+      "displayName": "Product Owner",
+      "oktaGroup": "aig-japan-auto-po",
+      "includeKinds": ["ENT", "BR", "FR", "PROC", "WF", "SCR", "ROLE", "TERM", "DOM"],
+      "maxTokens": 2000,
+      "writeAccess": ["workspace.lifecycle"],
+      "capabilities": ["workspace.create", "workspace.close", "kb.query", "story.prioritize"]
+    },
+    {
+      "id": "ba",
+      "displayName": "Business Analyst",
+      "oktaGroup": "aig-japan-auto-ba",
+      "includeKinds": ["ENT", "BR", "FR", "PROC", "WF", "SEQ", "SCR", "SYS", "INT", "ROLE", "TERM", "DOM", "ALIAS"],
+      "maxTokens": 3200,
+      "writeAccess": ["workspace.fsd", "workspace.brd", "workspace.stories"],
+      "capabilities": ["workspace.analysis", "kb.query", "kb.chatbot", "fe.generate.fsd", "fe.generate.brd", "fe.generate.stories"]
+    },
+    {
+      "id": "architect",
+      "displayName": "Architect",
+      "oktaGroup": "aig-japan-auto-arch",
+      "includeKinds": ["SYS", "INT", "CMP", "API", "WF", "SEQ", "ENT", "REL"],
+      "maxTokens": 3200,
+      "writeAccess": ["workspace.srd", "workspace.architecture"],
+      "capabilities": ["kb.query", "fe.generate.srd", "fe.generate.component-diagram"]
+    },
+    {
+      "id": "developer",
+      "displayName": "Developer (FE/BE)",
+      "oktaGroup": "aig-japan-auto-dev",
+      "includeKinds": ["CMP", "API", "SCR", "INT", "FR", "SYS"],
+      "maxTokens": 2800,
+      "writeAccess": ["workspace.development-notes"],
+      "capabilities": ["kb.query", "kb.read"]
+    },
+    {
+      "id": "qa",
+      "displayName": "QA Engineer",
+      "oktaGroup": "aig-japan-auto-qa",
+      "includeKinds": ["SCR", "BR", "FR", "WF", "PROC", "ROLE"],
+      "maxTokens": 2400,
+      "writeAccess": ["workspace.test-artifacts"],
+      "capabilities": ["kb.query", "fe.generate.test-plan"]
+    },
+    {
+      "id": "devops",
+      "displayName": "DevOps Engineer",
+      "oktaGroup": "aig-japan-auto-devops",
+      "includeKinds": ["SYS", "INT", "CMP", "API", "PROC"],
+      "maxTokens": 2400,
+      "writeAccess": ["workspace.deployment"],
+      "capabilities": ["kb.query", "kb.read"]
+    }
+  ]
+}

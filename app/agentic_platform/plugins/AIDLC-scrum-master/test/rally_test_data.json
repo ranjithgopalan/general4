@@ -1,0 +1,54 @@
+{
+  "description": "Known Rally items with expected results from user query history",
+  "last_updated": "2026-01-15",
+  "test_data": {
+    "features": [
+      {
+        "id": "F117572",
+        "name": "BRD Generation from Documents",
+        "owner": "Dhananjay Agrawat",
+        "owner_email": "dhananjay.agrawat@aig.com",
+        "state": "Implementing",
+        "notes": "User confirmed owner is Dhananjay Agrawat"
+      },
+      {
+        "id": "F119972",
+        "name": "One-Command Task Generation from TDD",
+        "owner": null,
+        "owner_email": null,
+        "state": "Backlog",
+        "notes": "Feature has no owner assigned"
+      },
+      {
+        "id": "F117399",
+        "name": "Requirements Completeness Validator",
+        "owner": "manoranjan n",
+        "owner_email": null,
+        "state": "Implementing",
+        "notes": "Also known as 'mano' or 'dhananjay agrawat' (same person)"
+      },
+      {
+        "id": "F116904",
+        "name": "Plugin Usage Telemetry & Analytics with GAME",
+        "owner": "senthilkumar b",
+        "owner_email": null,
+        "state": "Implementing",
+        "notes": "Also known as 'senthil'"
+      },
+      {
+        "id": "F116902",
+        "name": "Automated Test Generation & Execution",
+        "owner": "jagan m",
+        "owner_email": null,
+        "state": "Implementing",
+        "notes": "Frequently queried feature"
+      }
+    ],
+    "user_aliases": {
+      "Dhananjay Agrawat": ["dhananjay agrawat", "manoranjan", "manoranjan n", "mano"],
+      "senthilkumar b": ["senthil"],
+      "Vensan C": ["vensan"],
+      "christopher l": ["chris", "christopher.le"]
+    }
+  }
+}

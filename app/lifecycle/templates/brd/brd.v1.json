@@ -1,0 +1,18 @@
+{
+  "template_id": "aig-brd",
+  "template_version": "v1",
+  "title": "Business Requirements Document",
+  "artifact_type": "brd",
+  "sections": [
+    { "key": "business_case",          "title": "1. Business Case",                                  "kind": "llm",   "max_words": 250  },
+    { "key": "scope_definition",       "title": "2. Scope & Boundaries (IN / OUT / DEFERRED)",       "kind": "data",  "max_words": null },
+    { "key": "business_requirements",  "title": "3. Business Requirements (Current → Proposed)",     "kind": "mixed", "max_words": null },
+    { "key": "business_rules",         "title": "4. Business Rules & Policies",                      "kind": "data",  "max_words": null },
+    { "key": "stakeholder_personas",   "title": "5. Target Personas & Needs",                        "kind": "mixed", "max_words": null },
+    { "key": "success_criteria",       "title": "6. Success Criteria (KPIs)",                        "kind": "llm",   "max_words": 500  },
+    { "key": "risks_and_compliance",   "title": "7. Risks & Compliance",                             "kind": "mixed", "max_words": null },
+    { "key": "acceptance_criteria",    "title": "8. Acceptance Criteria",                            "kind": "data",  "max_words": null },
+    { "key": "key_decisions",          "title": "9. Key Decisions & Open Items",                     "kind": "mixed", "max_words": null },
+    { "key": "references",             "title": "10. References & Evidence",                         "kind": "data",  "max_words": null }
+  ]
+}

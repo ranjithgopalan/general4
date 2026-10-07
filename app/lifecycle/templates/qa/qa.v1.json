@@ -1,0 +1,113 @@
+{
+  "template_id": "aig-test-plan",
+  "template_version": "v1",
+  "title": "QA Test Plan — AIG Japan Auto",
+  "artifact_type": "qa",
+
+  "description": "Official AIG QA test plan for the Japan Auto SDLC lifecycle. Produced by the QA stage (S7: QA_TESTING). Grounded in accepted DevDocument (required), StoriesDocument (Gherkin AC), SRDDocument (workflows + integrations), FSDDocument (screen specs), and BRDDocument (business rules). 10 sections — each section traces to a prior artifact or KB card; no section is fabricated.",
+
+  "source_hierarchy": {
+    "story_test_cases": "StoriesDocument.stories Gherkin AC (ac_given / ac_when / ac_then) — NO KB fallback; QA-BLOCKED stub when Gherkin is empty",
+    "screen_validations": "FSDDocument.screen_specs (ScreenSpec.fields + ScreenSpec.business_rules) — NO KB fallback; FSD-STUB when empty",
+    "business_rule_tests": "BRDDocument.business_rules primary → brd.references BR-* card_bodies fallback; KB-GAP stub when both empty",
+    "workflow_scenarios": "SRDDocument.sequence_diagrams (Mermaid DSL parsed for participants + messages) — NO KB fallback; ARCH-STUB when empty",
+    "role_access_tests": "stories.as_a × dev.impl_tasks.screens_to_update cross-reference — NO KB fallback; NO-ROLE stub when as_a empty",
+    "integration_tests": "SRDDocument.integration_design primary → srd.references INT-*/API-* card_bodies fallback; ARCH-STUB when both empty",
+    "regression_scope": "Derived deterministically from story_test_cases + screen_validations + business_rule_tests (capped at 20)",
+    "gap_log": "Deterministic stubs from all sections + LLM-identified supplemental gaps (max 5, deduped)",
+    "references": "All prior artifact refs + KB card IDs used (from allowed_ids)"
+  },
+
+  "stub_markers": {
+    "QA-BLOCKED": "Gherkin AC is empty — Stories stage must re-run to populate Given/When/Then",
+    "FSD-STUB": "FSD screen spec is empty — FSD stage must re-run to populate fields and business rules",
+    "KB-GAP": "No rule text in BRD and no KB card found — add BR-* card via /kb-build then re-generate",
+    "ARCH-STUB": "No Mermaid DSL or protocol in SRD — Architecture stage must re-run",
+    "NO-ROLE": "Story has no as_a actor — Stories stage must re-run to set persona"
+  },
+
+  "sections": [
+    {
+      "key": "test_scope",
+      "title": "1. Test Scope",
+      "kind": "llm",
+      "max_words": 300,
+      "description": "LLM-generated test scope narrative (≤300 words). Summarises what is in scope, what prior artifacts were used, and what stubs remain. Fallback (no model): deterministic summary of source counts + populated/gapped sections."
+    },
+    {
+      "key": "story_test_cases",
+      "title": "2. Story Test Cases",
+      "kind": "data",
+      "max_words": null,
+      "description": "One or more TestCase entries per user story. Derived from Gherkin AC (ac_given → preconditions, ac_when → steps, ac_then → expected_result). QA-BLOCKED stub emitted when Gherkin is empty — fix Stories, not QA."
+    },
+    {
+      "key": "screen_validations",
+      "title": "3. Screen Validations",
+      "kind": "data",
+      "max_words": null,
+      "description": "One ScreenValidation per FSD ScreenSpec. field_validations from ScreenSpec.fields; rule_validations from ScreenSpec.business_rules. FSD-STUB emitted when ScreenSpec is empty — fix FSD, not QA."
+    },
+    {
+      "key": "business_rule_tests",
+      "title": "4. Business Rule Tests",
+      "kind": "data",
+      "max_words": null,
+      "description": "One BusinessRuleTest per BRD business rule (primary) or KB BR-* card (fallback via brd.references). test_assertions derived from rule_text. KB-GAP stub emitted when both sources are empty — add KB card via /kb-build."
+    },
+    {
+      "key": "workflow_scenarios",
+      "title": "5. Workflow Scenarios",
+      "kind": "data",
+      "max_words": null,
+      "description": "One WorkflowScenario per SRD sequence diagram. Participants and scenario_steps extracted from Mermaid DSL via message regex. ARCH-STUB emitted when DSL is empty — fix Architecture stage."
+    },
+    {
+      "key": "role_access_tests",
+      "title": "6. Role Access Tests",
+      "kind": "data",
+      "max_words": null,
+      "description": "One RoleAccessTest per as_a actor × screens_to_update cross-reference (stories × dev impl_tasks). test_assertions cover allowed/denied access patterns. NO-ROLE stub emitted when as_a is empty."
+    },
+    {
+      "key": "integration_tests",
+      "title": "7. Integration Tests",
+      "kind": "data",
+      "max_words": null,
+      "description": "One IntegrationTest per SRD integration point (primary) or KB INT-*/API-* card (fallback via srd.references). test_assertions from _PROTOCOL_ASSERTIONS for the detected protocol. ARCH-STUB when both empty."
+    },
+    {
+      "key": "regression_scope",
+      "title": "8. Regression Scope",
+      "kind": "data",
+      "max_words": null,
+      "description": "Deterministic regression scope: one item per story, screen, and business rule (capped at 20). LLM may append up to 5 additional items; cap holds."
+    },
+    {
+      "key": "gap_log",
+      "title": "9. Gap Log",
+      "kind": "data",
+      "max_words": null,
+      "description": "All QAGap entries collected during test plan assembly. gap_type: no_gherkin | empty_fsd_scr | empty_brd_rules | no_role | empty_srd_seq | empty_srd_int | kb_gap. Each gap carries an action — fix the upstream stage or add KB content before re-generating."
+    },
+    {
+      "key": "references",
+      "title": "10. References",
+      "kind": "data",
+      "max_words": null,
+      "description": "Prior artifact refs (dev_ref, stories_ref, srd_ref, fsd_ref, brd_ref) and all KB card IDs used in this test plan."
+    },
+    {
+      "key": "test_executions",
+      "title": "11. Test Execution Records",
+      "kind": "data",
+      "max_words": null,
+      "description": "Append-only test execution log. Updated via POST /ws/{id}/qa/execute. status: TODO | PASS | FAIL | BLOCKED | SKIP. FAIL/BLOCKED block acceptance unless override_justification is provided."
+    }
+  ],
+
+  "gate": {
+    "id": "QA07",
+    "description": "QA test plan accepted — all FAIL/BLOCKED executions resolved or overridden — before workspace advances to PENDING_SYNC"
+  }
+}

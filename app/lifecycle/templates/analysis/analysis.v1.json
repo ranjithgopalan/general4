@@ -1,0 +1,20 @@
+{
+  "template_id": "aig-impact-analysis",
+  "template_version": "v1",
+  "title": "Impact Analysis",
+  "artifact_type": "analysis",
+  "sections": [
+    { "key": "classification", "title": "1. Change Classification", "kind": "data" },
+    { "key": "narrative", "title": "2. Summary", "kind": "llm" },
+    { "key": "scope", "title": "3. Scope — New / Enhancement / Existing (vs AS-IS)", "kind": "data" },
+    { "key": "touch_points", "title": "4. How It Touches the Existing System", "kind": "data" },
+    { "key": "modifications", "title": "5. What Is Being Modified (as-is → to-be)", "kind": "data" },
+    { "key": "downstream", "title": "6. Downstream Effect — What Breaks", "kind": "data" },
+    { "key": "change_locations", "title": "7. Where Changes Are Needed", "kind": "data" },
+    { "key": "conflicts", "title": "8. Conflicts With Existing Nodes", "kind": "data" },
+    { "key": "coverage", "title": "9. Coverage & Blind Spots", "kind": "data" },
+    { "key": "risks", "title": "10. Risks & Effort", "kind": "data" },
+    { "key": "gaps", "title": "11. Open Questions & Gaps", "kind": "data" },
+    { "key": "references", "title": "12. References (fact-check)", "kind": "data" }
+  ]
+}

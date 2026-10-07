@@ -1,0 +1,265 @@
+﻿﻿# UW Credit Risk -- GLOBAL WORKSPACE stage (PRD 8.1)
+#
+# Runs ONCE for the programme. The Reverse Engineering Document (RED) uploaded at
+# onboarding is the primary input: G1 PRD is grounded directly in it (via the
+# local RAG store) so the requirements reflect what the legacy system actually
+# does rather than what the specifications claim, then the ladder works down to
+# the EPIC set.
+#
+# The Architect takes FRD, ADR and NFR *together* and produces the SDD and the
+# SRD. The SRD is the only input that yields EPICs (G6 -> G7). On approval of G7
+# the platform opens one Mini Workspace per EPIC (FR-P4).
+#
+# Tally for this tier: 2 Fits / 5 Changes / 0 Gaps.
+#
+# The former G1 Impact Analysis (a builtin that correlated code knowledge,
+# business specs and schema before the PRD) was removed on 2026-08-17: with the
+# RED indexed locally the PRD reads the legacy knowledge itself, and a separate
+# sizing pass in front of it only summarised what the PRD then re-summarised.
+# The builtin (worker_app/builtins/impact_analysis.py) is kept for pipelines
+# that still want it.
+# Cost / harness controls (FR-020). Per stage:
+#   max_turns: N     agent turn cap for this stage (default FE_MAX_TURNS=120 is far
+#                    too generous -- documents 24-40, code 60). A run that hits its
+#                    cap is FAILED (error_code max_turns), never persisted as done.
+#   model: high      escalate to FE_MODEL_HIGH (Opus) for synthesis-heavy stages;
+#                    everything else runs FE_MODEL (Sonnet 4.6). Concrete ids allowed.
+#   effort:          clamped per model family (xhigh -> high on Sonnet 4.6).
+#
+
+name: uw-cr-global
+title: UW Credit Risk -- Global Workspace
+description: >
+  Programme-level document ladder: PRD (grounded in the RED) through to the
+  EPIC set. Runs once. Approving the EPIC set fans out one Mini Workspace per EPIC.
+tier: global
+kb_application: UW Credit Risk
+
+# Artefacts produced by the Architecture Workspace (singleton, runs after FRD)
+# that Global stages may consume. Validated against the architecture pipeline's
+# `produces` list at load time. Readable via readable_workspace_ids(), which
+# returns [global_id, architecture_id] for a Global workspace.
+arch_inputs:
+  - srd
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  # --- G1 -----------------------------------------------------------------
+  - key: kb
+    seq: 1
+    name: Knowledge Base Build
+    agent_group: "Business Analyst Agent"
+    deliverable: >
+      Build and index the knowledge base from the Reverse Engineering Document (RED)
+      and supporting documentation. Ensures downstream stages have access to semantically
+      indexed domain knowledge before PRD generation.
+    owner:
+      kind: builtin
+      handler: kb-extract
+    corpus: true
+    publish_kb: true
+    grounding: off
+    status: fits
+    notes: >
+      Knowledge base build stage (BedrockReActRunner / Claude) that reads the RED corpus
+      and writes typed knowledge cards (BR, FR, ENT, CMP, SCR, API, WF) to kb/knowledge/.
+      Executed first to support PRD and downstream analysis.
+    approval_persona: business-analyst
+    artifact_tier: requirement
+    contributing_personas: [business-analyst]
+    consumes: []
+    produces: [kb]
+    target: docs
+    max_turns: 40
+    timeout_seconds: 1800
+    effort: high
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Write, Glob, Grep]
+
+  # --- G2 -----------------------------------------------------------------
+  - key: prd
+    seq: 2
+    name: Product Requirement Document
+    agent_group: "Business Analyst Agent"
+    deliverable: >
+      Product Requirements Document grounded directly in the Reverse Engineering
+      Document (RED) of the legacy aiucredit application: its business rules,
+      screens and workflows, data structures and integrations, correlated
+      against the project domain pack (target services, UI modules, bands).
+      Where the RED does not cover a topic, say so rather than inventing it.
+    retrieval_queries:
+      - business rules, validation rules and approval thresholds for credit risk underwriting
+      - user roles, permissions and workflow states in the credit application
+      - screens, forms and user journeys of the aiucredit ASP application
+      - data structures, tables, records and stored procedures used by the application
+      - integrations, emails, reports, batch jobs and external feeds
+      - known issues, technical debt and constraints of the legacy system
+    owner:
+      kind: builtin
+      handler: ba-brd
+    status: changes
+    notes: >
+      The BA plugin (ba-brd skill) generates a BRD-format document registered as the `prd`
+      artefact — the name all downstream stages consume. The supplied
+      UW+Credit+Risk+Monitoring+-+PRD.pdf is an INPUT to this stage, not its output.
+    approval_persona: product-owner
+    artifact_tier: value
+    contributing_personas: [business-analyst]
+    consumes: [kb]
+    produces: [prd, business-rules]
+    target: docs
+    max_turns: 10
+    timeout_seconds: 1800
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- G3 -----------------------------------------------------------------
+  - key: frd
+    seq: 3
+    name: Functional Requirement Document
+    agent_group: "Business Analyst Agent"
+    deliverable: >
+      Functional Requirements Document derived from the approved PRD and the
+      read-only schema snapshot.
+    owner:
+      kind: builtin
+      handler: ba-frd
+    status: changes
+    notes: >
+      `frd-generator` + `ba-frd` now exist in AIDLC-business-analyst v1.1.0,
+      built for this stage. Classified `changes` rather than `fits` because they
+      have never run against a real approved PRD.
+    approval_persona: business-analyst
+    artifact_tier: requirement
+    contributing_personas: [architect]
+    consumes: [prd, business-rules, kb]
+    produces: [frd]
+    target: docs
+    max_turns: 10
+    timeout_seconds: 1800
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- G4 -----------------------------------------------------------------
+  # (was G7 -- ADR/NFR/SDD/SRD moved to the Architecture Workspace)
+  - key: epic-set
+    seq: 4
+    name: EPIC Set
+    agent_group: "Scrum Master Agent"
+    deliverable: >
+      The EPIC set decomposed from the approved SRD (produced by the Architecture
+      Workspace). Approving this opens one Mini Workspace per EPIC (FR-P4). The
+      SRD is read from the Architecture Workspace via readable_workspace_ids.
+    owner:
+      kind: builtin
+      handler: ba-generate
+    status: fits
+    notes: >
+      `epic-generator.md` exists and the knowledge base already models SpecType.EPIC
+      with Gherkin acceptance criteria. SRD is now produced by the Architecture
+      Workspace (not this pipeline); it is declared in `arch_inputs` above so the
+      load-time validation accepts it.
+    approval_persona: product-owner
+    artifact_tier: value
+    contributing_personas: [scrum-master, business-analyst]
+    consumes: [srd,frd,business-rules]
+    produces: [epic]
+    target: docs
+    max_turns: 10
+    timeout_seconds: 1800
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- G5 -----------------------------------------------------------------
+  # Per-EPIC stages (G5–G7) run inside the global LangGraph thread, once per
+  # EPIC, each scoped to its own Mini Workspace ID. The global graph drives a
+  # loop: open_minis → loop_head → feature → user-story → coverage → loop_head
+  # (repeat for next EPIC) → fan_out → merge. Mini Workspaces therefore start
+  # their own LangGraph threads from LLD (seq 1 in uw-cr-mini).
+  #
+  # `required_runner` is absent so these stages execute on the server-side
+  # Bedrock worker (FE_MODEL / FE_MODEL_HIGH), not the Claude Code CLI.
+  - key: feature
+    seq: 5
+    name: Feature
+    agent_group: "Scrum Master Agent"
+    deliverable: >
+      Features decomposed from this EPIC, with Gherkin acceptance criteria.
+      Runs once per EPIC inside the global LangGraph thread, scoped to the
+      EPIC's Mini Workspace so the Scrum Master sees only this EPIC's context.
+    owner:
+      kind: builtin
+      handler: feature
+    status: fits
+    approval_persona: scrum-master
+    artifact_tier: backlog
+    contributing_personas: [business-analyst, product-owner]
+    consumes: [epic]
+    produces: [feature]
+    target: docs
+    max_turns: 5
+    timeout_seconds: 600
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- G6 -----------------------------------------------------------------
+  - key: user-story
+    seq: 6
+    name: User Story
+    agent_group: "Scrum Master Agent"
+    deliverable: >
+      User stories with acceptance criteria and 3-factor story-point estimates,
+      published to Rally. Scoped to this EPIC's Mini Workspace.
+    owner:
+      kind: builtin
+      handler: user-story
+    status: fits
+    approval_persona: scrum-master
+    artifact_tier: backlog
+    contributing_personas: [business-analyst, developer]
+    consumes: [feature]
+    produces: [user-story]
+    target: docs
+    max_turns: 5
+    timeout_seconds: 600
+    effort: medium
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]
+
+  # --- G7 -----------------------------------------------------------------
+  - key: coverage
+    seq: 7
+    name: Coverage Validation
+    agent_group: "Business Analyst Agent"
+    deliverable: >
+      Coverage of the SRD → EPIC → Feature → Story chain for this EPIC. The
+      mandatory HITL gate is retained. Scoped to this EPIC's Mini Workspace.
+    owner:
+      kind: builtin
+      handler: coverage
+    status: fits
+    approval_persona: business-analyst
+    artifact_tier: requirement
+    contributing_personas: [scrum-master, product-owner]
+    consumes: [user-story, feature, epic, srd]
+    produces: [coverage-report]
+    target: docs
+    max_turns: 5
+    timeout_seconds: 600
+    effort: medium
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Write, Glob, Grep, mcp__kb__*]

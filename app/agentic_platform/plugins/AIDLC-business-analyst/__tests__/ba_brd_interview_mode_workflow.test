@@ -1,0 +1,33 @@
+=== TEST: BA-BRD Skill - Interview Mode End-to-End Workflow ===
+DESCRIPTION: Tests the ba-brd skill's complete workflow including template loading, document processing, generation mode selection, interview-mode section-by-section review with AskUserQuestion for each section, ambiguity detection, traceability collection, and final BRD.md/BRD.docx generation with optional gap/conflict resolution.
+
+--- ACCEPTANCE CRITERIA ---
+**Interactive BRD Generation Workflow.** Given a document folder, when the ba-brd skill is invoked, then it must: (1) load BRD template using brd-template skill (Phase 0), (2) invoke document-processor agent to extract paragraph-level JSON mapping (Phase 1), (3) discover output path using 3-tier approach (Phase 2), (4) ask user to select generation mode (Interview/Direct) using AskUserQuestion (Phase 2.5), (5) IN INTERVIEW MODE: generate sections one-by-one with review loop using AskUserQuestion presenting draft with sources/gaps/confidence and three options (Approve, Modify with text input, Note as gap and address later), (6) IN INTERVIEW MODE: show first 500 chars of draft with summary of rest for sections >500 chars, (7) handle section modifications and deferred gaps, (8) invoke ambiguity-detector agent after all sections confirmed (Phase 3), (9) format ambiguities into Section 12 without resolution, (10) invoke traceability-builder agent if template includes traceability sections (Phase 4), (11) generate BRD.md and convert to BRD.docx (Phase 4), (12) check Section 12 for ambiguities and offer optional resolution via AskUserQuestion (Phase 5), (13) invoke gap-resolver and conflict-resolver skills if user chooses to resolve, (14) update BRD files with resolutions if resolved.
+
+--- PROMPT ---
+Skill: GATHER-business-analyst:ba-brd
+Generate BRD from documents in plugins/GATHER-business-analyst/__tests__/.inputs/invoice-automation/
+
+Use the SAFE BRD template.
+
+--- PROMPT 2 ---
+Interview mode - Review each section (Recommended)
+
+--- PROMPT 3 ---
+Approve
+
+--- PROMPT 4 ---
+Approve
+
+--- PROMPT 5 ---
+Approve
+
+--- PROMPT 6 ---
+Approve
+
+--- PROMPT 7 ---
+No, skip
+
+--- EXPECTED KEYWORDS ---
+ba-brd, brd-template skill, template loaded, document-processor, JSON mapping, mappingFile, paragraph_mappings, section_in_brd, keyPoints, condensed, generation mode, AskUserQuestion, Interview mode, Direct mode, section-by-section, draft preview, first 500 characters, summary of rest, sources, gaps, confidence, Approve, Modify, Note as gap, deferred, ambiguity-detector, Section 12, Ambiguities and Clarifications, traceability-builder, template-conditional, BRD.md, BRD.docx, documents skill, DOCX conversion, Phase 5, optional resolution, gap-resolver, conflict-resolver, TodoWrite, section generation progress, communicate progress
+--- END TEST ---

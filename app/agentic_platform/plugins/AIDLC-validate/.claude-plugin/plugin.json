@@ -1,0 +1,20 @@
+{
+  "name": "AIDLC-validate",
+  "description": "Verifies completeness and coverage across SDLC stages from EPIC to Features to User Stories to Code. Multi-agent architecture with specialized validators for each SAFe level.",
+  "version": "1.4.2",
+  "author": {
+    "name": "Genlite DevTools Team"
+  },
+  "agents": [
+    "./agents/requirements-validator-router.md",
+    "./agents/epic-coverage-validator.md",
+    "./agents/feature-coverage-validator.md",
+    "./agents/story-coverage-validator.md",
+    "./agents/traceability-analyzer.md"
+  ],
+  "skills": [
+    "./skills/validation-strategies",
+    "./skills/requirements",
+    "./skills/rai"
+  ]
+}

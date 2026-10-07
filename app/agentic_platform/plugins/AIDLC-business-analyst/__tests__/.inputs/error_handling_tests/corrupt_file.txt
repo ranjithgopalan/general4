@@ -1,0 +1,8 @@
+This file intentionally contains invalid characters and formatting to test error handling: �����������
+@#$%^&*()_+{}|:"<>?[]
+
+Some text that might parse correctly...
+
+But then more garbage: ����������
+��������
+NUL character test:

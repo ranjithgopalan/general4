@@ -1,0 +1,17 @@
+=== TEST: BRD Template - AI-Powered Example to Template Conversion ===
+DESCRIPTION: Tests the brd-template skill's AI-powered semantic analysis that converts ANY example BRD document into a reusable template by automatically detecting instance-specific values in any format and replacing them with context-aware placeholders.
+
+--- ACCEPTANCE CRITERIA ---
+**AI-Powered Template Conversion.** Given an example BRD document without placeholders, when the brd-template skill is invoked, then it must: (1) ask user to select template (custom/SAFE/legacy) if not specified using AskUserQuestion, (2) load and convert DOCX/PDF to markdown if needed, (3) detect document type (proper template with ≥10 placeholders OR example document), (4) IF EXAMPLE: invoke AI semantic analysis to identify instance-specific values across 8+ categories (project_name, person_name, date, metric, company, requirement_id, budget, role), (5) AI must create semantic placeholders like {user capacity}, {product owner}, {release date} (not generic {value}, {name}), (6) handle unconventional formats: "MyApp" → {project name}, "Q1 2026" → {release date}, "Dr. Sarah Smith" → {product owner}, "10,000 users" → {user capacity}, "500ms" → {response time target}, (7) distinguish context: keep protocol versions like "TLS 1.3" literal, replace document versions, (8) sort replacements by text length (longest first) to avoid partial replacements, (9) validate conversion quality (minimum 5 placeholders created), (10) parse template structure extracting sections, subsections, hierarchy, (11) detect ID format pattern, (12) return TemplateStructure object with sections array, totalSections, placeholders list, idFormat, templatePath.
+
+--- PROMPT ---
+Skill: GATHER-business-analyst:brd-template
+
+I have an example BRD document at plugins/GATHER-business-analyst/__tests__/.inputs/examples/sample-brd.docx that I want to convert to a reusable template.
+
+--- PROMPT 2 ---
+Continue with AI-powered conversion and create semantic placeholders.
+
+--- EXPECTED KEYWORDS ---
+brd-template, AskUserQuestion, template selection, custom template, SAFE BRD, legacy Inscore, DOCX conversion, documents skill, template type detection, example document, AI-powered, semantic analysis, instance-specific values, categories, project_name, person_name, date, metric, company, requirement_id, budget, role, semantic placeholders, user capacity, product owner, release date, response time target, context-aware, unconventional formats, MyApp, Q1 2026, Dr. Sarah Smith, 10,000 users, 500ms, TLS 1.3 kept literal, text length sorting, conversion quality, minimum 5 placeholders, template structure, sections array, subsections, hierarchy, ID format, PRE_XXX, TemplateStructure, totalSections, placeholders list
+--- END TEST ---

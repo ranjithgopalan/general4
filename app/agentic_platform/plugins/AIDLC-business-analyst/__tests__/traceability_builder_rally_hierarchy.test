@@ -1,0 +1,24 @@
+=== TEST: Traceability Builder - Rally Hierarchy and Source Citations ===
+DESCRIPTION: Tests the traceability-builder agent's ability to generate Rally portfolio hierarchy tables (Epic→Capability→Feature), source citation tables linking requirements to documents, and source document reference sections, with template-conditional generation logic.
+
+--- ACCEPTANCE CRITERIA ---
+**Traceability Matrix Generation.** Given an Epic ID, requirements with citations, and a template with traceability sections, when the traceability-builder agent is invoked, then it must: (1) detect traceability sections in template ("Requirement Traceability Matrix", "Source Documents Reference"), (2) invoke rally-hierarchy skill with Epic ID to fetch hierarchy, (3) generate Rally hierarchy table with columns: Level, ID, Name, Parent ID, Parent Name, Status (AC1), (4) validate parent-child relationships against Rally API, (5) generate source citation table mapping Req ID to Source Document, Section, Page, Type (AC2), (6) generate source document reference sections with metadata, sections referenced, and requirements sourced (AC3), (7) CONDITIONALLY generate traceability ONLY if template includes traceability sections (template-conditional logic), (8) return formatted markdown sections 13-14 ready for BRD inclusion, (9) handle graceful degradation when Rally API unavailable or Epic ID not provided.
+
+--- PROMPT ---
+Generate traceability matrices for Epic E12345 with the following requirements:
+- FR-001: User authentication
+- FR-002: Session management
+- FR-003: Password reset
+
+Source documents:
+- Security_Requirements.pdf (sections 3.2, 3.3)
+- Functional_Spec.docx (sections 4.1, 4.3)
+
+Template includes "Requirement Traceability Matrix" and "Source Documents Reference" sections.
+
+--- PROMPT 2 ---
+Continue with Rally hierarchy fetching and generate the complete traceability sections.
+
+--- EXPECTED KEYWORDS ---
+traceability-builder, Rally hierarchy, Epic, Capability, Feature, rally-hierarchy skill, parent-child relationships, traceability table, source citation, Req ID, Source Document, Section, Page, Type, source document reference, template-conditional, template detection, Requirement Traceability Matrix, Source Documents Reference, validation summary, FormattedID, citation coverage, graceful degradation, Rally API, markdown tables, sections 13-14
+--- END TEST ---

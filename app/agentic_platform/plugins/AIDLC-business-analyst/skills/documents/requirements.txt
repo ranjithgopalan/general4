@@ -1,0 +1,15 @@
+# Word/Excel
+python-docx>=0.8.11
+openpyxl>=3.1.0
+
+# PDF
+weasyprint>=60.0
+pdfplumber>=0.10.0
+markdown>=3.5
+
+# PowerPoint
+python-pptx>=0.6.21
+
+# Outlook MSG
+extract-msg>=0.48.0
+beautifulsoup4>=4.12.0

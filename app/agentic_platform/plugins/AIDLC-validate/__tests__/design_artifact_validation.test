@@ -1,0 +1,58 @@
+=== TEST: Design Artifact Validation Support ===
+DESCRIPTION: Validates Design artifacts (Service TDD, Integration TDD, UI TDD) against Master TDD and FSD/BRD
+RALLY: US772464
+
+--- ACCEPTANCE CRITERIA ---
+## US772464: Design artifact validation support
+
+**As a** Design Agent user,
+**I want** to validate Design artifacts against Master TDD and FSD/BRD,
+**So that** design documents are complete per project workflow.
+
+### Acceptance Criteria
+- Service Feature TDD validation against Master TDD
+- Integration TDD validation (SOAP, async patterns)
+- UI Feature TDD validation
+- Project-specific output structure recognized
+
+### Notes
+Per BRD review feedback from Dixen Daniel - supports Design Agent artifacts.
+
+### Tasks
+- **TA2174995**: Define design artifact schema - Map design artifact types and validation rules. Define validation for Service Feature TDD, Integration TDD, UI Feature TDD against Master TDD + FSD/BRD.
+- **TA2174996**: Implement TDD validation - Validate technical design documents. Parse consolidated service TDD, integration patterns (SOAP, async), and UI components against source.
+- **TA2174997**: Add project workflow support - Handle project-specific output structure. Support conditional outputs based on project scope (backend services, integrations, UI as applicable).
+
+**Output Evaluation**: When scoring, examine the validation output to verify it validates design artifacts against the BRD source, checks for TDD completeness, and handles different design document types.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate Design artifacts against the Master TDD and BRD requirements.
+
+**Ground Truth Documents (Source of Truth):**
+1. Master TDD: `__tests__/.inputs/1.Master TDD/master-tdd-full.md`
+2. BRD: `__tests__/.inputs/sharepoint-agent2/01.BRD Requirements/requirements-validator-brd.md`
+
+**Design Artifacts to Validate:**
+1. Service TDD: `__tests__/.inputs/mock-service-tdd.md`
+
+Please validate that the Service TDD document follows the Master TDD patterns and addresses the BRD requirements. Check:
+
+1. **Service/Backend Design**: Does the Service TDD follow the layer architecture (Handler → Processor → Helper) defined in Master TDD Section 3.1?
+
+2. **Error Handling Patterns**: Does the Service TDD implement Go-style error handling as specified in Master TDD Section 4.2?
+
+3. **Logging Standards**: Does the Service TDD follow structured logging with correlation IDs per Master TDD Section 5.1?
+
+4. **BRD Coverage**: Does the Service TDD address the business requirements (BR1-BR12) from the BRD?
+
+Generate a design validation report showing coverage of each design artifact type against the source documents, with confidence levels for each finding.
+
+--- PROMPT 2 ---
+Write the generated design validation report to the folder .outputs/design_artifact_validation/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, design, artifact, TDD, Service, Master TDD, BRD, validation, layer architecture, handler, processor, helper, error handling, logging, coverage, confidence
+
+--- END TEST ---

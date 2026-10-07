@@ -1,0 +1,14 @@
+take the docx file, this is our template.
+
+ask claude code to each section in the template and codify
+what each section should contain.
+
+then the skill should take whatever inputs we have and
+figure out what the main objective of the project is.
+
+if there are any descrepencies with the given information
+or we think something is missing, we should ask the user
+to clarify or fill in the gaps
+
+once we have a complete undersatnding, it should
+st

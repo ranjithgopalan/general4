@@ -1,0 +1,67 @@
+=== TEST: Features to Stories Coverage Validation ===
+DESCRIPTION: Validates that all Features are fully covered by User Stories with partial coverage flagging
+RALLY: US772457
+
+--- ACCEPTANCE CRITERIA ---
+## US772457: Features to Stories coverage validation
+
+**As a** Scrum Master,
+**I want** to validate that all Features are fully covered by User Stories,
+**So that** features are properly decomposed for implementation.
+
+### Acceptance Criteria
+- Each feature has associated user stories
+- Feature acceptance criteria reflected in story acceptance
+- Feature scope fully decomposed into stories
+- Partial coverage flagged with specific gaps
+
+### Tasks
+- **TA2174978**: Extract requirements from features - Parse Feature documents to extract scope and acceptance criteria. Identify feature capabilities, acceptance criteria, and scope boundaries from feature documents.
+- **TA2174979**: Match features to stories - Compare feature requirements against User Stories. Check story coverage for each feature. Handle Rally Stories, Jira Stories, and Markdown formats.
+- **TA2174980**: Report coverage gaps - Generate report showing uncovered feature scope. Identify features with no stories, partial coverage, or missing acceptance criteria mapping.
+
+**Output Evaluation**: When scoring, examine the COMPLETENESS-REPORT.md output to verify features are validated against user stories with partial coverage specifically flagged.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate Features to Stories coverage.
+
+**Ground Truth Documents (Feature Specifications):**
+- Features directory: `__tests__/.inputs/mock-features/`
+  - F001-document-processing.md (5 acceptance criteria)
+  - F002-epic-validation.md (4 acceptance criteria)
+  - F003-features-validation.md (4 acceptance criteria)
+  - F004-gap-reporting.md (6 acceptance criteria)
+  - F005-coverage-metrics.md (4 acceptance criteria)
+
+**Target Artifacts (User Stories):**
+- User Stories: `__tests__/.inputs/mock-user-stories.md`
+  - US-RV-001 through US-RV-008
+
+Please validate that all Feature acceptance criteria are covered by User Stories:
+
+1. **Feature to Story Mapping**:
+   - F-RV-002 (EPIC Validation) → US-RV-001, US-RV-002, US-RV-003
+   - F-RV-003 (Features Validation) → US-RV-004, US-RV-005
+   - F-RV-004 (Gap Reporting) → US-RV-006, US-RV-007
+   - F-RV-005 (Coverage Metrics) → US-RV-008
+   - F-RV-001 (Document Processing) → ? (No stories?)
+
+2. **Acceptance Criteria Coverage**: For each Feature AC, check if a User Story addresses it
+
+3. **Partial Coverage Detection**: Flag features with incomplete story coverage
+
+4. **Gap Report**: For each gap:
+   - Feature AC not covered
+   - Expected User Story
+   - Confidence level
+   - Recommendation
+
+--- PROMPT 2 ---
+Write the generated COMPLETENESS-REPORT.md to the folder .outputs/features_to_stories_coverage/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, feature, story, coverage, partial, gap, acceptance criteria, decomposed, F-RV-001, F-RV-002, US-RV, scope, mapping, confidence
+
+--- END TEST ---

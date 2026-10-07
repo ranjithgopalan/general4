@@ -1,0 +1,28 @@
+{
+  "template_id": "aig-stories",
+  "template_version": "v1",
+  "title": "AIG Japan Auto — User Stories Backlog",
+  "artifact_type": "stories",
+  "sections": [
+    { "key": "stories",      "title": "User Stories",             "kind": "data" },
+    { "key": "traceability", "title": "AC-3 Traceability Matrix", "kind": "data" },
+    { "key": "open_items",   "title": "Open Items (BA-TODO)",     "kind": "mixed" },
+    { "key": "references",   "title": "References & Evidence",    "kind": "data" }
+  ],
+  "points_by_class": { "New": 8, "Enhancement": 5, "Derived": 3 },
+  "split_threshold": 8,
+  "grounding_modes": {
+    "New":         "CONTEXTUAL — structural citation check; word-overlap not required",
+    "Migration":   "CONTEXTUAL — structural citation check; word-overlap not required",
+    "Enhancement": "CONTENT — 2+ significant word overlap with cited KB card prose",
+    "Derived":     "CONTENT — 2+ significant word overlap with cited KB card prose"
+  },
+  "csv_columns": [
+    "story_id", "title", "as_a", "i_want", "so_that",
+    "ac_given", "ac_when", "ac_then", "change_class",
+    "points", "priority", "source_refs", "description_html"
+  ],
+  "rally_schedule_state": "Defined",
+  "export_format": "csv",
+  "csv_encoding": "utf-8-sig"
+}

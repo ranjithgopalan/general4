@@ -1,0 +1,435 @@
+USER STORIES - Insurance Policy Management System
+Epic: Policy Creation and Management
+Release: 1.0 | Target: Q2 2026
+
+========================================
+THEME 1: POLICY CREATION
+========================================
+
+US-001: Create New Policy as an Agent
+As an insurance agent
+I want to create a new policy through a guided workflow
+So that I can complete policy creation quickly and accurately without errors
+
+Acceptance Criteria:
+- Given I am logged in as an agent
+- When I click "Create New Policy"
+- Then I should see a dropdown to select policy type
+- And the form should display relevant fields for the selected policy type
+- And mandatory fields should be clearly marked with asterisks
+- And tooltips should be available for complex fields
+
+Priority: High | Story Points: 8 | Sprint: 1
+
+---
+
+US-002: Auto-Calculate Premium
+As an insurance agent
+I want the premium to be calculated automatically based on policy parameters
+So that I don't have to manually calculate and risk making errors
+
+Acceptance Criteria:
+- Given I have entered coverage amount, age, and risk factors
+- When I click "Calculate Premium"
+- Then the system should display monthly and annual premium
+- And show a breakdown of the calculation factors
+- And update automatically when I change any input parameter
+
+Priority: Critical | Story Points: 13 | Sprint: 1
+
+---
+
+US-003: Save Policy Draft
+As an insurance agent
+I want to save my work as a draft
+So that I can complete the policy later without losing data
+
+Acceptance Criteria:
+- Given I am in the process of creating a policy
+- When I click "Save as Draft"
+- Then the system should save all entered data
+- And assign a draft policy number
+- And allow me to find and resume the draft later
+
+Priority: Medium | Story Points: 5 | Sprint: 2
+
+---
+
+US-004: Validate Policy Data
+As an insurance agent
+I want the system to validate data in real-time
+So that I can correct errors immediately and not at submission
+
+Acceptance Criteria:
+- Given I am entering policy data
+- When I move to the next field (on blur)
+- Then the system should validate the previous field
+- And display inline error messages for invalid data
+- And prevent form submission if any validation errors exist
+
+Priority: High | Story Points: 8 | Sprint: 1
+
+---
+
+US-005: Submit Policy for Approval
+As an insurance agent
+I want to submit completed policies for manager approval
+So that policies can be reviewed and activated
+
+Acceptance Criteria:
+- Given I have completed all required fields
+- When I click "Submit for Approval"
+- Then the system should validate all business rules
+- And save the policy with status "Pending Review"
+- And send notification to assigned manager
+- And display confirmation with policy number
+
+Priority: High | Story Points: 8 | Sprint: 2
+
+========================================
+THEME 2: POLICY APPROVAL
+========================================
+
+US-006: View Pending Approvals Dashboard
+As a policy manager
+I want to see all policies pending my approval in a dashboard
+So that I can review and approve them efficiently
+
+Acceptance Criteria:
+- Given I am logged in as a manager
+- When I navigate to "Pending Approvals"
+- Then I should see a list of all policies awaiting approval
+- And see key information: policy number, agent, customer, amount, date submitted
+- And be able to filter by policy type, agent, or date range
+- And sort by any column
+
+Priority: High | Story Points: 8 | Sprint: 2
+
+---
+
+US-007: Review and Approve Policy
+As a policy manager
+I want to review policy details and approve if acceptable
+So that approved policies can become active
+
+Acceptance Criteria:
+- Given I am viewing a pending policy
+- When I click "Approve"
+- Then I should be able to set the effective date
+- And add approval comments
+- And confirm the approval action
+- And the system should update status to "Active"
+- And send notification to the agent and customer
+
+Priority: High | Story Points: 8 | Sprint: 2
+
+---
+
+US-008: Reject Policy with Feedback
+As a policy manager
+I want to reject policies that don't meet requirements
+So that agents can make corrections and resubmit
+
+Acceptance Criteria:
+- Given I am reviewing a pending policy
+- When I click "Reject"
+- Then I should provide a reason for rejection
+- And list required actions for the agent
+- And the system should return the policy to "Draft" status
+- And send notification to the agent with feedback
+
+Priority: Medium | Story Points: 5 | Sprint: 2
+
+========================================
+THEME 3: POLICY SEARCH AND VIEWING
+========================================
+
+US-009: Search Policies by Number
+As an insurance agent or manager
+I want to search for policies by policy number
+So that I can quickly find a specific policy
+
+Acceptance Criteria:
+- Given I am on the policy search page
+- When I enter a policy number in the search box
+- Then the system should return the exact match
+- And display it within 2 seconds
+- And allow me to click to view full details
+
+Priority: High | Story Points: 5 | Sprint: 3
+
+---
+
+US-010: Search Policies by Customer Name
+As an insurance agent or manager
+I want to search for policies by customer name
+So that I can find all policies for a customer
+
+Acceptance Criteria:
+- Given I am on the policy search page
+- When I enter a customer name (partial match supported)
+- Then the system should return all matching policies
+- And display customer name, policy number, type, status
+- And allow me to click any result to view details
+
+Priority: High | Story Points: 5 | Sprint: 3
+
+---
+
+US-011: Filter Policies by Status
+As an insurance agent or manager
+I want to filter policies by status (Active, Expired, Cancelled)
+So that I can focus on policies in a specific state
+
+Acceptance Criteria:
+- Given I am viewing the policy list
+- When I select a status filter
+- Then the system should show only policies with that status
+- And update the count indicator
+- And allow multiple filters to be combined
+
+Priority: Medium | Story Points: 3 | Sprint: 3
+
+---
+
+US-012: View Policy Details
+As an insurance agent or manager
+I want to view complete details of a policy
+So that I can review all information and documents
+
+Acceptance Criteria:
+- Given I have found a policy
+- When I click on it
+- Then I should see all policy information organized in sections
+- And see the policy history (created, approved, modified dates)
+- And see attached documents with download links
+- And see calculated premium and coverage details
+
+Priority: High | Story Points: 5 | Sprint: 3
+
+========================================
+THEME 4: POLICY MODIFICATION
+========================================
+
+US-013: Suspend Active Policy
+As a policy manager
+I want to temporarily suspend an active policy
+So that coverage is paused pending investigation or customer request
+
+Acceptance Criteria:
+- Given I am viewing an active policy
+- When I click "Suspend Policy"
+- Then I should provide a reason for suspension
+- And set an expected resolution date
+- And confirm the suspension
+- And the system should update status to "Suspended"
+- And notify the agent and customer
+
+Priority: Medium | Story Points: 5 | Sprint: 4
+
+---
+
+US-014: Cancel Policy
+As a policy manager
+I want to cancel a policy permanently
+So that coverage is terminated and no further premiums are charged
+
+Acceptance Criteria:
+- Given I am viewing an active or suspended policy
+- When I click "Cancel Policy"
+- Then I should provide cancellation reason
+- And select cancellation date (immediate or future)
+- And confirm with 30-day notice requirement
+- And the system should update status to "Cancelled"
+- And process any refunds if applicable
+- And notify the agent and customer
+
+Priority: Medium | Story Points: 8 | Sprint: 4
+
+---
+
+US-015: Reactivate Suspended Policy
+As a policy manager
+I want to reactivate a suspended policy
+So that coverage is restored after issues are resolved
+
+Acceptance Criteria:
+- Given I am viewing a suspended policy
+- When I click "Reactivate Policy"
+- Then I should provide reactivation notes
+- And confirm outstanding issues are resolved
+- And the system should update status to "Active"
+- And notify the agent and customer
+
+Priority: Medium | Story Points: 5 | Sprint: 4
+
+========================================
+THEME 5: REPORTING AND ANALYTICS
+========================================
+
+US-016: View Agent Performance Dashboard
+As a policy manager
+I want to view my team's performance metrics
+So that I can monitor productivity and quality
+
+Acceptance Criteria:
+- Given I am logged in as a manager
+- When I navigate to "Team Dashboard"
+- Then I should see metrics for each agent:
+  * Number of policies created (this month, YTD)
+  * Average time to create policy
+  * Error rate (policies rejected/total submitted)
+  * Customer satisfaction scores
+- And be able to filter by date range
+- And export reports to Excel
+
+Priority: Medium | Story Points: 13 | Sprint: 5
+
+---
+
+US-017: Generate Compliance Report
+As a compliance officer
+I want to generate compliance reports
+So that I can verify adherence to regulations
+
+Acceptance Criteria:
+- Given I am logged in as a compliance officer
+- When I navigate to "Compliance Reports"
+- Then I should be able to select report type:
+  * Age validation compliance
+  * Coverage amount compliance
+  * Approval workflow compliance
+  * Data access audit
+- And specify date range
+- And generate PDF report
+- And see summary statistics and any violations
+
+Priority: High | Story Points: 13 | Sprint: 5
+
+---
+
+US-018: View System Audit Log
+As an auditor
+I want to view the complete audit log
+So that I can track all system activities for compliance
+
+Acceptance Criteria:
+- Given I am logged in as an auditor
+- When I navigate to "Audit Log"
+- Then I should see all logged activities:
+  * User, action, entity, timestamp
+  * Before and after values for updates
+  * IP address and user agent
+- And be able to filter by user, entity type, action, date range
+- And export filtered results
+
+Priority: Medium | Story Points: 8 | Sprint: 5
+
+========================================
+THEME 6: MOBILE AND ACCESSIBILITY
+========================================
+
+US-019: Create Policy on Tablet
+As an insurance agent
+I want to create policies on my iPad while in the field
+So that I can serve customers on-site without returning to office
+
+Acceptance Criteria:
+- Given I am using an iPad (iOS or Android tablet)
+- When I access the policy creation form
+- Then the interface should be responsive and touch-friendly
+- And all fields should be easily accessible
+- And the form should save automatically on connection loss
+- And sync when connection is restored
+
+Priority: High | Story Points: 13 | Sprint: 6
+
+---
+
+US-020: Accessible Interface for Screen Readers
+As a visually impaired insurance agent
+I want the interface to work with screen readers
+So that I can perform my job effectively
+
+Acceptance Criteria:
+- Given I am using a screen reader (JAWS, NVDA)
+- When I navigate the application
+- Then all interactive elements should have proper ARIA labels
+- And form fields should have associated labels
+- And error messages should be announced
+- And keyboard navigation should work for all functions
+- And the app should meet WCAG 2.1 AA standards
+
+Priority: Medium | Story Points: 13 | Sprint: 6
+
+========================================
+THEME 7: NOTIFICATIONS AND COMMUNICATION
+========================================
+
+US-021: Email Notification on Status Change
+As an insurance agent
+I want to receive email notifications when policy status changes
+So that I can stay informed without constantly checking the system
+
+Acceptance Criteria:
+- Given a policy I created changes status
+- When the status changes (approved, rejected, etc.)
+- Then I should receive an email notification
+- And the email should include policy number, customer name, new status
+- And a link to view the policy
+- And any comments from the manager
+
+Priority: Medium | Story Points: 5 | Sprint: 7
+
+---
+
+US-022: In-App Notifications
+As a user of the system
+I want to see in-app notifications for important events
+So that I am aware of items requiring my attention
+
+Acceptance Criteria:
+- Given I am logged into the system
+- When an event occurs that requires my attention
+- Then I should see a notification badge on the bell icon
+- And clicking it should show a list of notifications
+- And I can mark notifications as read
+- And unread count should be displayed
+
+Priority: Low | Story Points: 8 | Sprint: 7
+
+========================================
+STORY SUMMARY
+========================================
+
+Total User Stories: 22
+Total Story Points: 178
+Estimated Sprints: 7 (2-week sprints)
+Estimated Delivery: Q2 2026
+
+Critical: 1 story (13 points)
+High Priority: 12 stories (98 points)
+Medium Priority: 8 stories (59 points)
+Low Priority: 1 story (8 points)
+
+========================================
+DEPENDENCIES
+========================================
+
+- US-002 (Premium Calculation) blocks US-005 (Submit Policy)
+- US-005 (Submit Policy) blocks US-006, US-007, US-008 (Approval workflow)
+- US-007, US-008 (Approval) blocks US-013, US-014, US-015 (Modifications)
+- US-009, US-010, US-011, US-012 (Search) are prerequisites for US-016, US-017, US-018 (Reporting)
+
+========================================
+OUT OF SCOPE (Future Releases)
+========================================
+
+- Customer self-service portal
+- Native mobile apps (iOS/Android)
+- Claims processing integration
+- Automated underwriting with AI/ML
+- Multi-language support
+- Bulk policy operations
+- Advanced analytics and predictive modeling
+- Integration with external credit bureaus

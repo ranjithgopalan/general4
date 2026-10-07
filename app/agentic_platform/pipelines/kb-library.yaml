@@ -1,0 +1,67 @@
+# GLOBAL CARD LIBRARY -- the shared knowledge base every project draws from.
+#
+# Runs for the reserved project `_library` only (fe_core.kb.library). Its inputs
+# are uploaded ONCE through POST /library/documents:
+#
+#   re-cards   the module JSON, one per module (RED JSON: one section per ASP
+#              file; sample doc/RED-Company-Search.json)
+#   screens    the screens Word document (sample doc/Admin-Company_Search.docx)
+#
+# POST /library/build queues the single stage below. It is the same no-model
+# kb-extract builtin a project's G1 runs: it converts every module JSON into
+# cards, binds each screen card to its pictures, writes the KB tree, runs the
+# gate and writes
+#
+#   kb/page-index.json            ASP file -> card ids, shared entities, pictures
+#   kb/_source/cards-merged.json  all modules, merged and validated
+#
+# A business analyst approves the run. Projects read APPROVED builds only: a
+# project uploads its ASP files (POST /projects/{id}/asp-source) and its own G1
+# selects the matching cards from the latest approved build.
+#
+# There is deliberately no second stage and no orchestrator thread: the library
+# is rebuilt on demand, and a finished thread would close its workspace.
+name: kb-library
+title: Global Card Library
+description: >
+  Build the shared card knowledge base from the module JSON(s) and the screens
+  Word document, gate it, and publish it for every project to select from.
+tier: global
+kb_application: _library
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  - key: kb
+    seq: 1
+    name: Library Knowledge Base Build
+    agent_group: "Business Analyst Agent"
+    deliverable: >
+      The global card library: one card per id from every module JSON, each
+      screen card bound to its pictures, the ASP-file to card mapping
+      (page-index.json), the typed-edge graph and the evidence map.
+    owner:
+      kind: builtin
+      handler: kb-extract
+    corpus: true
+    publish_kb: true
+    grounding: off
+    status: fits
+    notes: >
+      No model is used. The build report (kb/_build-report.md) lists what a
+      reviewer must look at before approving: screen cards without a picture,
+      pictures on pages without a screen card, and input warnings.
+    approval_persona: business-analyst
+    artifact_tier: requirement
+    contributing_personas: [business-analyst]
+    consumes: []
+    produces: [kb]
+    target: docs
+    max_turns: 40
+    timeout_seconds: 1800
+    effort: high
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Write, Glob, Grep]

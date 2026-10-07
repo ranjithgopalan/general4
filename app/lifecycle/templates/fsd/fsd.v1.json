@@ -1,0 +1,20 @@
+{
+  "template_id": "aig-fsd",
+  "template_version": "v1",
+  "title": "Functional Specification Document",
+  "artifact_type": "fsd",
+  "sections": [
+    { "key": "context_summary",        "title": "1. Project Context & Background",                 "kind": "llm" },
+    { "key": "scope",                   "title": "2. Scope (New / Enhancement / Existing)",         "kind": "data" },
+    { "key": "functional_requirements", "title": "3. Functional Requirements (as-is → to-be)",     "kind": "mixed" },
+    { "key": "process_flows",           "title": "4. Process Flows",                               "kind": "data" },
+    { "key": "screen_specs",            "title": "5. Screen Specifications",                       "kind": "data" },
+    { "key": "business_rules",          "title": "6. Business Rules",                              "kind": "data" },
+    { "key": "data_model",              "title": "7. Data Model Impact",                           "kind": "data" },
+    { "key": "integration_points",      "title": "8. Integration Points",                          "kind": "data" },
+    { "key": "non_functional_reqs",     "title": "9. Non-Functional Requirements",                 "kind": "llm" },
+    { "key": "acceptance_criteria",     "title": "10. Acceptance Criteria (AC-3 matrix)",          "kind": "data" },
+    { "key": "open_items",              "title": "11. Open Items & Stubs (BA-TODO / DEV-TODO)",    "kind": "data" },
+    { "key": "references",              "title": "12. References & Evidence",                      "kind": "data" }
+  ]
+}

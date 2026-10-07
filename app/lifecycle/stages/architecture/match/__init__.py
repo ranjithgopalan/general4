@@ -1,0 +1,1 @@
+"""Architecture stage — context builder."""

@@ -1,0 +1,24 @@
+=== TEST: Ambiguity Detector - Comprehensive Detection ===
+DESCRIPTION: Tests the ambiguity-detector agent's ability to detect all 5 ambiguity types (conflicts, missing business rules, undefined elements, vague language, missing acceptance criteria) and generate structured JSON output with severity scoring and actionable recommendations.
+
+--- ACCEPTANCE CRITERIA ---
+**Comprehensive Ambiguity Detection.** Given source documents with requirements containing conflicts, gaps, undefined terms, vague language, and missing acceptance criteria, when the ambiguity-detector agent is invoked, then it must: (1) detect conflicts using semantic comparison across documents (AC1), (2) identify missing business rules and incomplete rule definitions (AC2), (3) detect undefined data fields and actors (AC2), (4) flag vague language and subjective terms without metrics (AC3), (5) identify requirements without testable acceptance criteria (AC3), (6) assign severity scores (High/Medium/Low) based on impact, (7) return structured JSON array with section_name, short_description, why_ambiguous, severity, and recommendation fields, (8) provide actionable recommendations for each ambiguity.
+
+--- PROMPT ---
+I have source documents in plugins/GATHER-business-analyst/__tests__/.inputs/vendor-portal/ that need ambiguity detection.
+
+Please analyze these documents for:
+- Conflicting statements across documents
+- Missing business rules and validation logic
+- Undefined data fields and actors
+- Vague language and subjective terms
+- Requirements without acceptance criteria
+
+Generate a comprehensive ambiguity report with severity scoring.
+
+--- PROMPT 2 ---
+Continue with the analysis and return the ambiguity report in JSON format as specified.
+
+--- EXPECTED KEYWORDS ---
+ambiguity-detector, JSON array, section_name, short_description, why_ambiguous, severity, recommendation, conflicts detected, missing business rules, undefined elements, vague language, missing acceptance criteria, High severity, Medium severity, Low severity, semantic comparison, pattern matching, cross-document validation, actionable recommendations, clarity score, source attribution, conflict detection, gap detection, read-only operation
+--- END TEST ---

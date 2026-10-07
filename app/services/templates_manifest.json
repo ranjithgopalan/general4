@@ -1,0 +1,258 @@
+{
+  "templates": [
+    {
+      "id": "impact-analysis",
+      "name": "Impact Analysis Template",
+      "description": "Business impact analysis document (12 sections)",
+      "version": "1.0",
+      "artifact_type": "impact_analysis",
+      "s3_key": "japan/auto/templates/impact-analysis-template.docx",
+      "created_at": "2026-08-10T00:00:00Z",
+      "created_by": "system",
+      "updated_at": "2026-08-10T00:00:00Z",
+      "variables": {
+        "workspace_id": {
+          "type": "string",
+          "description": "Workspace ID",
+          "example": "WS-114"
+        },
+        "title": {
+          "type": "string",
+          "description": "Document title",
+          "example": "Impact Analysis"
+        },
+        "date": {
+          "type": "string",
+          "description": "Generation date (formatted)",
+          "example": "August 10, 2026"
+        },
+        "generated_at": {
+          "type": "string",
+          "description": "Full generation timestamp",
+          "example": "August 10, 2026, 10:12:39 AM"
+        },
+        "requirement": {
+          "type": "string",
+          "description": "Original requirement text",
+          "example": "Add EV coverage rider to AAP product"
+        },
+        "change_class": {
+          "type": "string",
+          "description": "Classification: New | Enhancement | Existing | Derived",
+          "example": "Enhancement"
+        },
+        "change_statement": {
+          "type": "string",
+          "description": "Rationale for classification",
+          "example": "Enhances existing coverage options"
+        },
+        "confidence": {
+          "type": "string",
+          "description": "Confidence percentage",
+          "example": "92%"
+        },
+        "section_1_title": {
+          "type": "string",
+          "example": "1 · Change Classification"
+        },
+        "section_1_content": {
+          "type": "string",
+          "example": "Enhancement (confidence 0.92)"
+        },
+        "section_2_title": {
+          "type": "string",
+          "example": "2 · Summary"
+        },
+        "section_2_content": {
+          "type": "string",
+          "description": "Plain-language summary",
+          "example": "This change enhances the AU product..."
+        },
+        "section_3_title": {
+          "type": "string",
+          "example": "3 · Scope — New / Enhancement / Existing"
+        },
+        "section_3_new": {
+          "type": "string",
+          "description": "Comma-separated new items",
+          "example": "EV coverage option, Premium calculation for EV"
+        },
+        "section_3_enhancement": {
+          "type": "string",
+          "example": "Coverage selection screen"
+        },
+        "section_3_existing": {
+          "type": "string",
+          "example": "Premium rounding logic"
+        },
+        "section_4_title": {
+          "type": "string",
+          "example": "4 · How it touches the existing system"
+        },
+        "section_4_content": {
+          "type": "string",
+          "example": "PEGA (System), AIG Connect (System), ESB (Integration)"
+        },
+        "section_5_title": {
+          "type": "string",
+          "example": "5 · What is being modified"
+        },
+        "section_5_content": {
+          "type": "string",
+          "example": "Coverage Selection Screen (BusinessRule), Premium Calculation (Process)"
+        },
+        "section_6_title": {
+          "type": "string",
+          "example": "6 · Downstream effect — what breaks"
+        },
+        "section_6_content": {
+          "type": "string",
+          "example": "No downstream dependents found."
+        },
+        "section_7_title": {
+          "type": "string",
+          "example": "7 · Where changes are needed"
+        },
+        "section_7_content": {
+          "type": "string",
+          "example": "PEGA Forms (Component), API Gateway (Integration)"
+        },
+        "section_8_title": {
+          "type": "string",
+          "example": "8 · Conflicts with existing work"
+        },
+        "section_8_content": {
+          "type": "string",
+          "example": "No conflicts detected."
+        },
+        "section_9_title": {
+          "type": "string",
+          "example": "9 · Coverage & blind spots"
+        },
+        "section_9_coverage": {
+          "type": "string",
+          "example": "95%"
+        },
+        "section_9_note": {
+          "type": "string",
+          "example": "Covered relevant entities and processes"
+        },
+        "section_10_title": {
+          "type": "string",
+          "example": "10 · Risks & effort"
+        },
+        "section_10_effort": {
+          "type": "string",
+          "example": "Medium"
+        },
+        "section_10_risks": {
+          "type": "string",
+          "example": "Integration complexity with ESB; Testing coverage for premium calculations"
+        },
+        "section_11_title": {
+          "type": "string",
+          "example": "11 · Open questions & gaps"
+        },
+        "section_11_content": {
+          "type": "string",
+          "example": "None at this stage."
+        },
+        "section_12_title": {
+          "type": "string",
+          "example": "12 · References"
+        },
+        "section_12_content": {
+          "type": "string",
+          "example": "ENT-JAUTO-001, SYS-JAUTO-002, BR-JAUTO-045"
+        }
+      }
+    },
+    {
+      "id": "fsd",
+      "name": "FSD Template",
+      "description": "Functional Specification Document (13 sections)",
+      "version": "1.0",
+      "artifact_type": "fsd",
+      "s3_key": "japan/auto/templates/fsd-template.docx",
+      "created_at": "2026-08-10T00:00:00Z",
+      "created_by": "system",
+      "variables": {
+        "workspace_id": "string",
+        "title": "string",
+        "date": "string",
+        "requirement": "string",
+        "change_class": "string",
+        "section_1_content": "string",
+        "section_2_content": "string",
+        "section_3_content": "string",
+        "section_4_content": "string",
+        "section_5_content": "string",
+        "section_6_content": "string",
+        "section_7_content": "string",
+        "section_8_content": "string",
+        "section_9_content": "string",
+        "section_10_content": "string",
+        "section_11_content": "string",
+        "section_12_content": "string",
+        "section_13_content": "string"
+      }
+    },
+    {
+      "id": "brd",
+      "name": "BRD Template",
+      "description": "Business Requirements Document (10 sections)",
+      "version": "1.0",
+      "artifact_type": "brd",
+      "s3_key": "japan/auto/templates/brd-template.docx",
+      "created_at": "2026-08-10T00:00:00Z",
+      "created_by": "system",
+      "variables": {
+        "workspace_id": "string",
+        "title": "string",
+        "date": "string",
+        "requirement": "string",
+        "change_class": "string",
+        "section_1_content": "string",
+        "section_2_content": "string",
+        "section_3_content": "string",
+        "section_4_content": "string",
+        "section_5_content": "string",
+        "section_6_content": "string",
+        "section_7_content": "string",
+        "section_8_content": "string",
+        "section_9_content": "string",
+        "section_10_content": "string"
+      }
+    },
+    {
+      "id": "srd",
+      "name": "SRD Template",
+      "description": "Solution Requirements Document (9 sections)",
+      "version": "1.0",
+      "artifact_type": "srd",
+      "s3_key": "japan/auto/templates/srd-template.docx",
+      "created_at": "2026-08-10T00:00:00Z",
+      "created_by": "system",
+      "variables": {
+        "workspace_id": "string",
+        "title": "string",
+        "date": "string"
+      }
+    },
+    {
+      "id": "test_plan",
+      "name": "Test Plan Template",
+      "description": "QA Test Plan (10 sections)",
+      "version": "1.0",
+      "artifact_type": "test_plan",
+      "s3_key": "japan/auto/templates/test-plan-template.docx",
+      "created_at": "2026-08-10T00:00:00Z",
+      "created_by": "system",
+      "variables": {
+        "workspace_id": "string",
+        "title": "string",
+        "date": "string"
+      }
+    }
+  ]
+}

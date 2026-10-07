@@ -1,0 +1,138 @@
+STAKEHOLDER INTERVIEW NOTES
+Insurance Policy Management System
+Interview Date: January 15, 2026
+Interviewer: Jane Doe, Business Analyst
+
+===========================================
+INTERVIEW 1: Sarah Johnson - Senior Insurance Agent
+===========================================
+
+Q: What are the biggest pain points in your current workflow?
+A: The biggest issue is the time it takes to create a new policy. I have to fill out paper forms, manually calculate premiums, and then enter everything into multiple systems. It takes about 45 minutes per policy, and I often make calculation errors that get caught later.
+
+Q: How many policies do you typically create per day?
+A: On a good day, I can complete 8-10 policies. But with all the manual work, I'm exhausted by the end of the day.
+
+Q: What features would you most want in a new system?
+A: Definitely automated premium calculation! I also want the ability to save drafts and come back to them later. And please make it work on my iPad - I do a lot of fieldwork and need mobile access.
+
+Q: What information do you typically need to collect from customers?
+A: Personal details like name, date of birth, address, contact information. For the policy itself: coverage amount, policy type, beneficiary information, and any pre-existing conditions for health policies.
+
+Q: How do you currently handle policy approvals?
+A: I email my manager with the policy details, and they review and email back approval. It's slow and there's no way to track where policies are in the approval process.
+
+===========================================
+INTERVIEW 2: Michael Chen - Regional Policy Manager
+===========================================
+
+Q: What are your main responsibilities regarding policy management?
+A: I approve all policies over $500,000 and review any policies that have high risk factors. I also monitor our team's performance and ensure we're meeting compliance requirements.
+
+Q: How do you currently track pending approvals?
+A: I don't have a good system. Agents email me, and I keep a mental note of what needs review. I probably miss some, to be honest.
+
+Q: What reporting capabilities would you need?
+A: I need to see team performance metrics - how many policies created, average processing time, error rates. I also need compliance reports showing that we're following all the rules for age limits, coverage amounts, etc.
+
+Q: What's your biggest concern about implementing a new system?
+A: Agent adoption. Some of our older agents are very comfortable with paper forms and resist change. We'll need good training and ongoing support.
+
+Q: What approval turnaround time would be acceptable?
+A: Ideally same day. If I get a notification when a policy needs review, I can usually approve within 1-2 hours during business hours.
+
+===========================================
+INTERVIEW 3: Lisa Rodriguez - Compliance Officer
+===========================================
+
+Q: What compliance requirements must the system meet?
+A: We have to comply with state insurance regulations, which vary by state. For health insurance, HIPAA is critical. We also need SOC 2 certification for our customers who require it.
+
+Q: What data retention requirements exist?
+A: Policy records must be kept for 7 years per regulatory requirements. We need full audit trails showing who created, modified, or accessed each policy.
+
+Q: What security measures are most important?
+A: Encryption of all PII - both at rest and in transit. Role-based access control so agents can only see their own policies. Multi-factor authentication for system access. And we need automatic session timeouts.
+
+Q: How should the system handle policy changes?
+A: Every change must be logged with the user ID, timestamp, what was changed, and why. The audit log must be immutable - no one can delete or modify it.
+
+Q: What reporting do you need for compliance?
+A: Monthly reports showing any policies that violate business rules, any data access by users, and any system security events. We also need ad-hoc reporting for regulatory audits.
+
+===========================================
+INTERVIEW 4: Tom Wilson - IT Support Lead
+===========================================
+
+Q: What technical constraints do we need to consider?
+A: We're standardized on AWS for infrastructure. All new systems must integrate with our LDAP for authentication. We use Oracle for our main database, so integration there is important.
+
+Q: What are your concerns about system performance?
+A: End of month is our peak time - agents rush to meet quotas. We need the system to handle at least 500 concurrent users without degrading performance.
+
+Q: What integrations are required?
+A: We need to integrate with our CRM for customer data, the product catalog system for policy types and pricing rules, and our document management system (SharePoint) for storing policy documents.
+
+Q: What's your preference for the user interface?
+A: It needs to be responsive and work on tablets since agents use iPads in the field. It should follow our company design standards and be accessible (WCAG 2.1 AA).
+
+Q: How should we handle system maintenance and updates?
+A: We have a maintenance window on Saturday nights 11 PM to 2 AM. Updates should be deployable with zero downtime if possible. We need good monitoring and alerting.
+
+===========================================
+INTERVIEW 5: Karen Martinez - Customer Service Representative
+===========================================
+
+Q: How do customers currently interact with the policy system?
+A: They don't - it's all through agents. But customers frequently call us asking about policy status, coverage details, and how to make changes.
+
+Q: What would improve the customer experience?
+A: If customers could view their policies online, that would reduce calls to us. Also, if the policy creation process was faster, customers wouldn't have to wait days for confirmation.
+
+Q: What questions do customers most frequently ask?
+A: "When will my policy be active?" "What's my coverage amount?" "How do I add a beneficiary?" "Can I change my coverage?" "How do I file a claim?"
+
+Q: What customer-facing features would you recommend?
+A: A customer portal where they can view policies, download documents, and request changes. Email notifications when policy status changes. Online chat for simple questions.
+
+Q: How do you handle customer complaints about the current system?
+A: Most complaints are about how long it takes to get a policy. Customers get frustrated waiting. If we can speed that up, satisfaction will improve dramatically.
+
+===========================================
+KEY TAKEAWAYS
+===========================================
+
+CRITICAL REQUIREMENTS:
+- Reduce policy creation time from 45 minutes to under 15 minutes
+- Automated premium calculation to eliminate errors
+- Mobile/tablet support for field agents
+- Automated approval workflow with notifications
+- Comprehensive compliance and audit logging
+- Integration with existing systems (CRM, LDAP, Oracle, SharePoint)
+
+MUST-HAVE FEATURES:
+- Guided policy creation workflow
+- Real-time validation of business rules
+- Dashboard for managers showing pending approvals
+- Performance and compliance reporting
+- Role-based access control
+- Multi-factor authentication
+
+NICE-TO-HAVE FEATURES:
+- Customer self-service portal
+- Advanced search and filtering
+- Bulk operations for multiple policies
+- Mobile app (native iOS/Android)
+
+SUCCESS METRICS:
+- Policy creation time: 45 min → 15 min (70% reduction)
+- Error rate: 12% → <1% (95% reduction)
+- Customer satisfaction: 3.2 → 4.5 (41% improvement)
+- System availability: 99.9% uptime
+- Manager approval time: Same day (within 2 hours)
+
+RISKS TO ADDRESS:
+- Agent resistance to change (mitigation: training, super-users)
+- Data migration complexity (mitigation: pilot migration, validation)
+- Integration reliability (mitigation: fallback mechanisms, monitoring)
+- Peak load performance (mitigation: load testing, auto-scaling)

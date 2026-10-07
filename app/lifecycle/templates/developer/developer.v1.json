@@ -1,0 +1,225 @@
+{
+  "template_id": "aig-dev",
+  "template_version": "v2",
+  "title": "Developer Implementation Document — Story-by-Story Workbook",
+  "artifact_type": "dev",
+
+  "description": "Enterprise developer handover document for the AIG Japan Auto platform. Produced by the Developer stage (S6) of the SDLC lifecycle. Self-contained per-story workbook: each story entry carries everything a developer or Claude Code needs to implement that story independently — user story, Gherkin AC, FR delta, business rules, code stubs, and Definition of Done.",
+
+  "document_intent": "Hand this document to a developer or Claude Code together with the original codebase. Instruction: 'Here is the codebase at input/Auto/ and here is the Developer Handover Document. Read Section 1 for the full requirement, then implement each story in Section 2 in order.'",
+
+  "pipeline_prerequisites": {
+    "required_before_developer_stage": [
+      "FSD stage (ANALYSIS → FSD) — populates FR deltas (as-is → to-be) and business rules per story",
+      "Stories stage (FSD → STORIES) — populates user story narrative, Gherkin AC, priority, points",
+      "Architecture stage (STORIES → ARCHITECTURE) — populates code stubs (CMP-*/API-* KB cards) and integration wiring"
+    ],
+    "consequence_if_missing": "Story fields will show stub placeholders. Re-run missing upstream stages, then re-generate this document."
+  },
+
+  "sections": [
+    {
+      "key": "change_summary",
+      "title": "1. Change Summary",
+      "kind": "data",
+      "max_words": null,
+      "description": "Workspace metadata + full requirement text. This is the anchor context that Claude Code / developer reads first.",
+      "fields": [
+        "workspace_id", "generated_at", "kb_version", "change_class",
+        "grounding_score", "template_id", "template_version",
+        "story_count", "code_stub_count", "open_gap_count",
+        "requirement (full text — the complete business requirement from INTAKE)"
+      ]
+    },
+    {
+      "key": "story_workbook",
+      "title": "2. Story-by-Story Implementation Workbook",
+      "kind": "data",
+      "max_words": null,
+      "description": "THE primary section. One self-contained entry per story from the SRD. Each entry is a complete developer brief for that story. Code stubs are embedded here (NOT in a separate section) so the developer never needs to cross-reference.",
+      "story_entry_fields": [
+        {
+          "field": "story_id",
+          "source": "SRD.story_refs",
+          "description": "Stable story identifier (e.g. STR-JAUTO-001)"
+        },
+        {
+          "field": "files_to_modify",
+          "source": "CodeStub.source_locus (from SRD.component_design CMP-*/API-* cards)",
+          "format": "Table: Repo | File Path (corpus) | Stack | Action | Ownership",
+          "description": "THE primary action table — the first thing a developer or Claude Code reads. Shows exactly which file to open and change. File paths are extracted from KB card source_loci (e.g. 'input/Auto/CodeBase/UI-NewBusiness/src/app/newbusiness/quote/quote.component.ts'). Repo column = the folder name directly under input/Auto/CodeBase/ (e.g. UI-NewBusiness, Services-NewBusiness, AdobeForms). Action = MODIFY for existing files, ADD for new files with no locus.",
+          "example": "| `UI-NewBusiness` | `input/Auto/CodeBase/UI-NewBusiness/src/app/newbusiness/quote/quote.component.ts` | `angular` | MODIFY | `HYBRID` |",
+          "stub_indicator": "Missing = Architecture stage not yet run. Re-run Architecture stage to populate source loci."
+        },
+        {
+          "field": "title",
+          "source": "StoriesDocument.stories[].title (preferred) → SRD.story_refs[].title",
+          "description": "Story title — must start with Enable/Allow/Provide/Support (from Stories stage). Minimum 8 words.",
+          "stub_indicator": "Short or one-word title = Stories stage not yet run"
+        },
+        {
+          "field": "priority",
+          "source": "StoriesDocument.stories[].priority",
+          "values": "High | Medium | Low",
+          "stub_indicator": "Always 'Medium' when Stories stage has not run"
+        },
+        {
+          "field": "story_points",
+          "source": "StoriesDocument.stories[].points",
+          "values": "New=8, Enhancement=5, Derived=3",
+          "stub_indicator": "Always 0 when Stories stage has not run"
+        },
+        {
+          "field": "story_text",
+          "source": "StoriesDocument.stories[]",
+          "format": "As a {as_a}, I want {i_want}, so that {so_that}.",
+          "description": "Full narrative user story. Names actual systems (AIG Connect, PEGA, WOD, ESB, FREIA, ASACDP) and specific field names/flags.",
+          "stub_indicator": "Empty / '⚠️ Stories stage not yet run' = Stories stage must run first"
+        },
+        {
+          "field": "gherkin_ac",
+          "source": "StoriesDocument.stories[].ac_given / ac_when / ac_then",
+          "format": "GIVEN {precondition}\nWHEN  {trigger action}\nTHEN  {observable outcome}",
+          "description": "QA-testable Gherkin acceptance criteria. THEN clause must name what is stored, displayed, or returned — specific enough for an automated test.",
+          "stub_indicator": "Empty / '⚠️ Run Stories stage first' = Stories stage must run first"
+        },
+        {
+          "field": "fr_deltas",
+          "source": "FSDDocument.fr_items (as_is, to_be fields)",
+          "format": "Table: FR ID | Title | Current Behaviour (as-is) | Required Change (to-be)",
+          "description": "Exact behaviour change per Functional Requirement. The developer implements the 'to-be' column. 'as-is' is what the current code does.",
+          "stub_indicator": "Empty table = FSD stage has not run, or FSD has no as_is/to_be for this FR"
+        },
+        {
+          "field": "business_rules_summary",
+          "source": "FSDDocument.business_rules (rule_text, applies_to)",
+          "format": "[BR-xxx] rule_text (applies_to: SCR-xxx)",
+          "description": "Business rules that govern this story. Developer must not implement logic that violates these rules. Surfaced from FSD (developer persona cannot read BR-* cards directly).",
+          "stub_indicator": "Empty = FSD stage has not run, or no BR-* cards linked to this story's screens"
+        },
+        {
+          "field": "code_stubs",
+          "source": "SRD.component_design (CMP-*/API-* KB cards) via deterministic stack detection",
+          "format": "Per stub: filename | KB card ID | stack | language | source locus | ownership | code template",
+          "description": "Template-based code stubs grouped by story. DEV-TODO sections must be implemented. ESB/XDP/PEGA stubs are reference-only (no source file changes).",
+          "stub_indicator": "Empty = Architecture SRD has no CMP-*/API-* cards, or all KB cards are outside developer-visible kinds"
+        },
+        {
+          "field": "components_to_modify",
+          "source": "SRD.story_refs[].kb_ids (CMP-* prefix)",
+          "description": "CMP-* KB card IDs of components to change. Cross-reference with corpus: input/Auto/ source path from KB card source_locus."
+        },
+        {
+          "field": "apis_to_implement",
+          "source": "SRD.story_refs[].kb_ids (API-* prefix)",
+          "description": "API-* KB card IDs of API endpoints to add or modify."
+        },
+        {
+          "field": "screens_to_update",
+          "source": "SRD.story_refs[].kb_ids (SCR-* prefix)",
+          "description": "SCR-* KB card IDs of AIG Connect screens affected."
+        },
+        {
+          "field": "integrations_to_wire",
+          "source": "SRD.story_refs[].kb_ids (INT-* prefix)",
+          "description": "INT-* KB card IDs of integration points to configure. Protocol + endpoint from SRD integration_design."
+        },
+        {
+          "field": "definition_of_done",
+          "source": "Derived from gherkin_ac (Given/When/Then) + kb_ids (CMP-*/API-* unit tests) + integrations",
+          "format": "Checklist items — each is a verifiable completion criterion",
+          "description": "Developer completes all items before QA handover. Each item maps to a Gherkin clause or a KB card."
+        },
+        {
+          "field": "gap_status",
+          "source": "Token overlap between story title and matched KB card labels",
+          "values": "direct (≥0.7) | derived (0.4–0.69) | partial | gap (<0.4)",
+          "description": "Confidence that KB evidence covers this story. 'gap' = architect review required before implementation."
+        },
+        {
+          "field": "ownership",
+          "source": "Detected from KB card source_locus (stack detection) + gap_status",
+          "values": "AUTO = stubs fully generated | HYBRID = partial | DEV-TODO = all manual",
+          "description": "AUTO means the stub is ready to implement; DEV-TODO means the developer must design the implementation from scratch."
+        }
+      ]
+    },
+    {
+      "key": "architecture_context",
+      "title": "3. Architecture Context",
+      "kind": "data",
+      "max_words": null,
+      "description": "System components and integrations from the accepted SRD. Reference only — do not modify without Architect sign-off."
+    },
+    {
+      "key": "full_code_stubs",
+      "title": "4. Full Code Stubs (copy-paste index)",
+      "kind": "data",
+      "max_words": null,
+      "description": "All code stubs in one consolidated place for copy-paste reference. Same content as embedded in Section 2 — listed here as a developer convenience index grouped by story and stack."
+    },
+    {
+      "key": "integration_wiring",
+      "title": "5. Integration Wiring Checklist",
+      "kind": "data",
+      "max_words": null,
+      "description": "One row per INT-* card from the SRD. Protocol, endpoint, from-component, and to-component must be confirmed before QA handover. ESB changes go through IBM ACE Toolkit — no source file edits."
+    },
+    {
+      "key": "rego_stubs",
+      "title": "6. REGO Policy Stubs",
+      "kind": "data",
+      "max_words": null,
+      "description": "OPA/REGO authorisation policy stubs — one per screen (SCR-*) affected by this change. Developer must update allowed personas from personas.json before QA handover."
+    },
+    {
+      "key": "test_expectations",
+      "title": "7. Test Expectations",
+      "kind": "data",
+      "max_words": null,
+      "description": "Auto-derived test cases from Gherkin AC + DoD. QA engineer uses these as the starting point for the formal test plan. Happy-path + negative test case per story."
+    },
+    {
+      "key": "gap_log",
+      "title": "8. Gap Log",
+      "kind": "data",
+      "max_words": null,
+      "description": "All DEV-TODO items, SME-required gaps, and compliance gaps. Every gap must be resolved or escalated before QA handover. Resolution process: compliance_gap → escalate immediately; gap+sme_required → standup; partial → implement best-effort; deferred → backlog ticket."
+    },
+    {
+      "key": "handover_checklist",
+      "title": "9. Handover Checklist",
+      "kind": "data",
+      "max_words": null,
+      "description": "Developer signs off before QA handover. Three categories: Development (stubs implemented, no DEV-TODO), Quality (tests pass, Sonar clean), Governance (gaps resolved, KB IDs valid, workspace advanced)."
+    }
+  ],
+
+  "ownership_values": {
+    "AUTO": "Code stub fully generated from KB card — developer fills DEV-TODO sections and adds tests",
+    "HYBRID": "Partial stub — developer must complete implementation sections marked DEV-TODO",
+    "DEV-TODO": "No KB evidence — developer designs implementation from scratch. Raise with Architect."
+  },
+
+  "gap_status_values": {
+    "direct": "KB card confidence ≥ 0.7 — high confidence, implement from stub",
+    "derived": "KB card confidence 0.4–0.69 — reasonable inference, validate with BA before implementing",
+    "partial": "KB card confidence 0.4–0.69 with some overlap — implement best-effort, flag in code comments",
+    "gap": "KB card confidence < 0.4 or no CMP/API card found — Architect review required before implementation",
+    "compliance_gap": "Compliance requirement — cannot defer. Escalate immediately.",
+    "deferred": "Acknowledged but deferred to v2 — create backlog ticket with workspace_id reference"
+  },
+
+  "stack_values": {
+    "angular": "Angular/TypeScript — UI-NewBusiness, UI-Endorsement repos in input/Auto/CodeBase/",
+    "java_springboot": "Java/Spring Boot — Services-NewBusiness, csvimport-services repos",
+    "ibm_esb": "IBM ESB/ESQL — changes go through IBM ACE Toolkit, NOT source files",
+    "adobe_xdp": "Adobe LiveCycle XDP — AdobeForms repo. JA-language labels need SME review (needs-ja-sme).",
+    "sql": "SQL/Oracle — ASACDP database. DBA review + Flyway migration required.",
+    "java_legacy": "Legacy Java/JSP — WebOnline-Adapter/FREIA adapter repos",
+    "pega": "PEGA — changes through PEGA Studio, NOT source files. Reference only.",
+    "unknown": "No source_locus or unrecognised path — developer must locate source file manually"
+  },
+
+  "note": "Code stubs are embedded IN each story_workbook entry (not in a separate flat list) so the developer/Claude Code has a single self-contained brief per story. The 'Files to Touch' table in each story is derived at render-time from KB card source_loci — never hardcoded — so it always reflects what the knowledge base knows about the actual corpus. Section 4 (Full Code Stubs) is a convenience index. Sections 3–9 are supplementary reference — Section 2 is the primary delivery."
+}

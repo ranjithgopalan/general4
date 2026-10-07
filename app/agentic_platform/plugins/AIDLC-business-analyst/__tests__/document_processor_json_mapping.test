@@ -1,0 +1,21 @@
+=== TEST: Document Processor - JSON Mapping Generation ===
+DESCRIPTION: Tests the document-processor agent's ability to convert multi-format documents (DOCX, PDF, MD) to markdown in memory, extract paragraph-level content with semantic BRD section mappings, and generate timestamped JSON mapping files with keyPoints, condensed summaries, confidence scores, and ambiguity flags.
+
+--- ACCEPTANCE CRITERIA ---
+**Document Processing with JSON Mapping.** Given a folder containing DOCX, PDF, and MD files, when the document-processor agent is invoked, then it must: (1) discover all source documents and exclude template files, (2) convert DOCX/PDF to markdown in memory (no intermediate files written to disk), (3) split content into logical paragraphs preserving structure, (4) analyze each paragraph to determine appropriate BRD section mapping (e.g., "2. Business Context", "4. Business Rules", "5. Functional Requirements"), (5) extract 3-5 keyPoints as bullet list from each paragraph, (6) generate condensed single-sentence summaries (max 150 chars), (7) calculate confidence scores (0.0-1.0) based on clarity and completeness, (8) flag ambiguous content with requires_review: true when confidence < 0.7, (9) save JSON mapping to .claude/GATHER-business-analyst/document-mappings/{timestamp}-mapping.json, (10) return summary object with mappingFile path, totalDocuments, totalParagraphs, and sectionDistribution.
+
+--- PROMPT ---
+Process documents in plugins/GATHER-business-analyst/__tests__/.inputs/policy-system/ folder.
+
+I need:
+- DOCX and PDF files converted to markdown
+- Paragraph-level extraction with BRD section mappings
+- JSON mapping file with semantic analysis
+- Distribution showing how paragraphs map to BRD sections
+
+--- PROMPT 2 ---
+Continue processing and generate the JSON mapping file.
+
+--- EXPECTED KEYWORDS ---
+document-processor, JSON mapping, mappingFile, paragraph-level, section_in_brd, reason_for_mapping, keyPoints, condensed, confidence, requires_review, ambiguity_flag, document_name, paragraph_index, .claude/GATHER-business-analyst/document-mappings, timestamp, totalDocuments, totalParagraphs, sectionDistribution, DOCX conversion, PDF conversion, markdown in memory, template exclusion, semantic mapping, Business Context, Business Rules, Functional Requirements, Non-Functional Requirements
+--- END TEST ---

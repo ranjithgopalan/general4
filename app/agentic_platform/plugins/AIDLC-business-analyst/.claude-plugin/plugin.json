@@ -1,0 +1,40 @@
+{
+  "name": "AIDLC-business-analyst",
+  "description": "Extracts business knowledge from documents to generate EPICs, business rules, personas, and BRDs following SAFe methodology. Template-driven architecture with skill-based auto-invocation. Interview-style BRD generation with section-by-section review and concise output formatting.",
+  "version": "1.1.0",
+  "author": {
+    "name": "AIG AI COE Tech Mod Team"
+  },
+  "keywords": [
+    "business-analyst",
+    "brd",
+    "epic",
+    "business-rules",
+    "personas",
+    "safe",
+    "requirements"
+  ],
+  "agents": [
+    "./agents/business-analyst.md",
+    "./agents/document-processor.md",
+    "./agents/business-rules-generator.md",
+    "./agents/epic-generator.md",
+    "./agents/ambiguity-detector.md",
+    "./agents/traceability-builder.md",
+    "./agents/frd-generator.md",
+    "./agents/rule-discovery-agent.md"
+  ],
+  "skills": [
+    "./skills/ba-explore",
+    "./skills/ba-generate",
+    "./skills/ba-brd",
+    "./skills/ba-validate",
+    "./skills/documents",
+    "./skills/rally-hierarchy",
+    "./skills/brd-template",
+    "./skills/gap-resolver",
+    "./skills/conflict-resolver",
+    "./skills/ba-frd",
+    "./skills/rule-discover"
+  ]
+}

@@ -1,0 +1,74 @@
+=== TEST: Stories to Code Traceability Validation ===
+DESCRIPTION: Validates that User Stories have code references with confidence levels and limitation acknowledgment
+RALLY: US772458
+
+--- ACCEPTANCE CRITERIA ---
+## US772458: Stories to Code traceability
+
+**As a** Tech Lead,
+**I want** to identify User Stories with no apparent code reference,
+**So that** I can verify implementation completeness.
+
+### Acceptance Criteria
+- Story IDs searched in code comments and filenames
+- Confidence level indicated (high for explicit refs, low for content match)
+- Stories with no code reference listed for review
+- Limitations clearly communicated (surface-level matching only)
+
+### Tasks
+- **TA2174981**: Search for story references in code - Find explicit story ID references in codebase. Search for story IDs in comments (// US-001), filenames (us-001-login.ts), and content. Rank by confidence.
+- **TA2174982**: Generate traceability report - List stories with and without code references. Output stories grouped by traceability confidence. Clearly state limitations of surface-level matching.
+
+**Output Evaluation**: When scoring, examine the traceability report to verify confidence levels are assigned and limitations of surface-level matching are clearly communicated.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate Stories to Code traceability.
+
+**Ground Truth Document (User Stories):**
+- User Stories: `__tests__/.inputs/mock-user-stories.md`
+  - US-RV-001: Parse EPIC Capabilities
+  - US-RV-002: Match Capabilities to Features
+  - US-RV-003: Generate Coverage Report
+  - US-RV-004: Parse Feature Documents
+  - US-RV-005: Match Features to Stories
+  - US-RV-006: Evidence-Based Gap Format
+  - US-RV-007: Confidence Scoring
+  - US-RV-008: Calculate Coverage Metrics
+
+**Target Artifacts (Codebase to Search):**
+- Plugin directory: `plugins/GATHER-validate/`
+  - Agents: `agents/*.md`
+  - Commands: `commands/*.md`
+  - Skills: `skills/**/*.md`
+
+Please search for story references in the GATHER-validate plugin codebase:
+
+1. **Explicit Story ID References**: Search for "US-RV-001", "US-RV-002", etc. in:
+   - Code comments (e.g., `// US-RV-001: Parse EPIC capabilities`)
+   - Filenames (e.g., `us-rv-001-epic-parser.md`)
+   - File content
+
+2. **Content-Based Matching**: Search for story keywords:
+   - "Parse EPIC" for US-RV-001
+   - "content matching" for US-RV-002
+   - "coverage report" for US-RV-003
+   - etc.
+
+3. **Confidence Levels**:
+   - HIGH: Explicit story ID found in comments/filenames
+   - MEDIUM: Filename convention matches
+   - LOW: Only content/keyword match
+
+4. **Stories Without References**: List all stories with no apparent code reference
+
+5. **Limitations Disclaimer**: Clearly state that this is surface-level matching only and does NOT guarantee implementation completeness
+
+--- PROMPT 2 ---
+Write the generated traceability report to the folder .outputs/stories_to_code_traceability/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, traceability, story, code, confidence, HIGH, MEDIUM, LOW, limitation, surface-level, US-RV-001, US-RV-002, reference, comment, filename, content match, implementation
+
+--- END TEST ---

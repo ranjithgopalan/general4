@@ -1,0 +1,66 @@
+=== TEST: Coverage Metrics and Summary Reporting ===
+DESCRIPTION: Validates coverage percentage calculation with confidence indicators and margin of error acknowledgment
+RALLY: US772460
+
+--- ACCEPTANCE CRITERIA ---
+## US772460: Coverage metrics and summary reporting
+
+**As a** Project Manager,
+**I want** to see estimated coverage percentages at each SDLC level,
+**So that** I can track requirements coverage status.
+
+### Acceptance Criteria
+- Coverage percentage calculated for each stage (BRD->EPIC, PRD->Features, etc.)
+- Confidence indicator shown with each percentage
+- Margin of error acknowledged (~70-80% reliability)
+- Gap distribution by confidence level displayed
+
+### Tasks
+- **TA2174986**: Calculate coverage metrics - Compute coverage percentages with confidence bounds. Count matched vs total requirements at each level. Include confidence indicator and margin of error.
+- **TA2174987**: Generate coverage summary - Produce dashboard-style coverage report. Show by-stage coverage, confidence levels, and gap distribution. Include disclaimer about estimate accuracy.
+
+**Output Evaluation**: When scoring, examine the coverage summary to verify it contains: percentage calculations, confidence indicators, margin of error disclaimer (~70-80% reliability), and gap distribution by confidence level.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need a coverage metrics summary report.
+
+**Ground Truth Documents (Full SDLC Chain):**
+1. EPIC: `__tests__/.inputs/mock-epic-definition.md` (9 capabilities)
+2. Features: `__tests__/.inputs/mock-features/` (5 features with 23 total acceptance criteria)
+3. User Stories: `__tests__/.inputs/mock-user-stories.md` (8 stories)
+
+**Validation Chain to Calculate:**
+- EPIC → Features: How many EPIC capabilities (C1-C9) are covered by Features?
+- Features → Stories: How many Feature ACs are covered by User Stories?
+
+Please generate a coverage metrics report that includes:
+
+1. **Coverage Percentage for Each Stage**:
+   - EPIC → Features: X/9 capabilities = XX%
+   - Features → Stories: X/23 acceptance criteria = XX%
+
+2. **Confidence Indicator** for each percentage (HIGH/MEDIUM/LOW)
+   - Based on matching quality (explicit ID match vs content match)
+
+3. **Margin of Error Acknowledgment**:
+   - Note the ~70-80% reliability of unstructured text comparison
+   - Include confidence bounds (e.g., "85% ± 15%")
+
+4. **Gap Distribution**:
+   - Number of HIGH confidence gaps
+   - Number of MEDIUM confidence gaps
+   - Number of LOW confidence gaps
+
+5. **Dashboard-Style Summary**:
+   - Visual indicators (emojis or symbols) for status
+   - Overall health assessment
+
+--- PROMPT 2 ---
+Write the generated coverage metrics report to the folder .outputs/coverage_metrics/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, coverage, percentage, metric, confidence, margin of error, reliability, 70-80%, distribution, HIGH, MEDIUM, LOW, estimate, dashboard, summary, EPIC, Features, Stories
+
+--- END TEST ---

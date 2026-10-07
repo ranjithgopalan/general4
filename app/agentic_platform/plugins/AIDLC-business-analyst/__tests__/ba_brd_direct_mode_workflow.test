@@ -1,0 +1,21 @@
+=== TEST: BA-BRD Skill - Direct Mode Auto-Generation ===
+DESCRIPTION: Tests the ba-brd skill's direct mode where all sections are auto-generated without user interaction for review, with progress communication as each section is generated, followed by ambiguity detection and final BRD output.
+
+--- ACCEPTANCE CRITERIA ---
+**Direct BRD Auto-Generation.** Given a document folder and direct mode selection, when the ba-brd skill is invoked, then it must: (1) load template and process documents (Phases 0-1), (2) discover output path (Phase 2), (3) ask user to select generation mode and receive "Direct mode" selection (Phase 2.5), (4) IN DIRECT MODE: auto-generate all sections without user interaction, (5) IN DIRECT MODE: communicate progress as each section is generated (e.g., "✓ Section 3 (Business Requirements) generated"), (6) use TodoWrite to track section generation progress, (7) read JSON mapping file and extract content using pre-extracted keyPoints and condensed summaries, (8) filter paragraphs by section_in_brd field for each section, (9) apply Content Conciseness Principles (tables over prose, compact notation, 40-50% size reduction), (10) invoke ambiguity-detector after all sections complete, (11) generate traceability if template includes sections, (12) output BRD.md and BRD.docx, (13) offer optional resolution for ambiguities if any exist.
+
+--- PROMPT ---
+Skill: GATHER-business-analyst:ba-brd
+Generate BRD from documents in plugins/GATHER-business-analyst/__tests__/.inputs/vendor-portal/
+
+Use the SAFE BRD template.
+
+--- PROMPT 2 ---
+Direct mode - Auto-generate entire BRD
+
+--- PROMPT 3 ---
+No, skip
+
+--- EXPECTED KEYWORDS ---
+ba-brd, Direct mode, auto-generate, without user interaction, progress communication, Section generated, TodoWrite, all sections complete, JSON mapping, section_in_brd, keyPoints, condensed, Content Conciseness Principles, tables over prose, compact notation, 40-50% reduction, ambiguity detection, mandatory, BRD.md, BRD.docx, optional resolution, faster generation, trusted sources
+--- END TEST ---

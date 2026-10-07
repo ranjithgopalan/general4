@@ -1,0 +1,247 @@
+# UW Credit Risk -- EPIC ASSEMBLER WORKSPACE
+#
+# Runs ONCE after ALL per-EPIC Mini Workspaces have reached approved status.
+# Registered as a second `mini`-tier pipeline (the only tier that may have a
+# global parent). The orchestrator selects this pipeline by name for the
+# Epic Assembler workspace rather than by tier.
+#
+# Enum constraints enforced by the Pydantic Pipeline / Stage models:
+#   tier        : global | mini | architecture
+#   status      : fits | changes | gap
+#   owner.kind  : plugin | builtin | external
+#                 builtin requires `handler`; external requires nothing extra
+#   target      : ui | api | db | policies | tests | docs | none
+#
+# inherited_inputs cross-validated against the global pipeline's produces at
+# load time (registry._validate_tier_links). Only artefacts the global
+# pipeline actually produces may appear here. Mini artefacts (ui-source,
+# ui-smoke-results, etc.) are NOT listable; they are consumed implicitly when
+# the assembler workspace checks out all EPIC branches before running.
+#
+# Frontend sidebar mapping (aidlc-platform-mgmt.component.html):
+#   agent_group "EPIC Assembler Agent" -> EPIC ASSEMBLER AGENT header
+#   key epic-assemble  / name "EPIC Assembly & Integration" -> EPIC Assembly row (A1)
+#   agent_group "Developer Agent" -> DEVELOPER AGENT header
+#   key db-wiring      / name "DB Integration"      -> DB Integration row  (A2)
+#   key local-deployment / name "Local Deployment" -> Deployment row       (A3)
+#   agent_group "Testing Agent"  -> TESTING AGENT header
+#   key ui-smoke / name "UI Smoke Test" -> UI Smoke Test row (A4)
+#   key ui-e2e   / name "UI E2E Test"   -> UI E2E Test row   (A5)
+#   agent_group "PR Merge Agent" -> PR MERGE AGENT header -> PR Merge row  (A6)
+
+name: uw-cr-epic-assembler
+title: UW Credit Risk -- EPIC Assembler (post-assembly)
+description: >
+  Cross-EPIC integration (API merge, UI merge, validation), smoke and E2E
+  testing, PR merge of all feature branches, and UAT deployment. Runs once
+  after every per-EPIC Mini Workspace pipeline completes.
+tier: mini
+parent: uw-cr-global
+kb_application: UW Credit Risk
+
+# Only global-pipeline outputs may be listed here (cross-validated at load
+# time). Mini-tier artefacts (ui-source, build-config, etc.) are not declared;
+# the assembler workspace receives them by checking out all EPIC branches.
+inherited_inputs:
+  - user-story       # for Playwright story-to-test traceability
+  - feature          # story linkage and coverage reporting
+
+default_permissions:
+  policy: deny_unlisted
+  allow: [Read, Glob, Grep]
+
+stages:
+  # --- A1 -----------------------------------------------------------------
+  - key: epic-assemble
+    seq: 1
+    name: EPIC Assembly & Integration
+    agent_group: "EPIC Assembler Agent"
+    deliverable: >
+      Fully integrated multi-EPIC application: merged Spring Boot multi-module
+      API project with Spring Cloud Gateway routing, merged Angular shell with
+      lazy-loaded EPIC feature routes, and a validation report confirming zero
+      compilation errors, no import conflicts, no port mismatches, and OpenAPI
+      consistency across all EPICs.
+    owner:
+      kind: plugin
+      plugin: AIDLC-integrator
+      skill: integrate
+    status: changes
+    notes: >
+      Single orchestrated agent that runs api-integrator then ui-integrator
+      then integration-validator in sequence. Internally: merges all EPIC
+      Spring Boot services into a multi-module Maven project with a Spring
+      Cloud Gateway layer; merges all EPIC Angular apps into a shell with
+      lazy-loaded routes (security-shell EPIC detected via AuthGuard/RoleGuard
+      becomes CoreModule); then validates compilation, imports, routes, ports,
+      and OpenAPI contracts. The integrate skill queries the ECS API for the
+      latest ui-code and api-code stage runs across all per-EPIC workspaces.
+    approval_persona: architect
+    artifact_tier: design
+    contributing_personas: [developer, architect]
+    consumes: []
+    produces: [integrated-api, integrated-ui, validation-report]
+    target: api
+    required_runner: cli
+    max_turns: 60
+    timeout_seconds: 3600
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- A2 (NEW — DB configuration wiring after epic-assemble) ---------------
+  - key: db-wiring
+    seq: 2
+    name: DB Integration
+    agent_group: "Developer Agent"
+    deliverable: >
+      Database configuration wired into the assembled Spring Boot multi-module
+      project. Schema snapshot (schema-snapshot.json) and SP catalog
+      (SP-catalog.json) extracted from a user-supplied DB details document.
+      Datasource URL, HikariCP pool settings, Flyway configuration,
+      stored-procedure cross-references, .env.example, and docker-compose.yml
+      DB variable blocks patched into every service module under integrated-api.
+    owner:
+      kind: plugin
+      plugin: AIDLC-db
+      skill: db-wire
+    status: changes
+    notes: >
+      Runs immediately after epic-assemble so datasource configuration is wired
+      into the assembled project before DAO generation (db-integration) and
+      local deployment. The db_details_path is read from aidlc.config.json and
+      injected into the Claude prompt by the CLI worker — no interactive input
+      is required at runtime. Produces db-config (patched API config + DB wire
+      report) and db-schema (schema-snapshot.json, SP-catalog.json). db-schema
+      feeds the db-integration stage's DAO generator as an enrichment starting
+      point.
+    approval_persona: developer
+    artifact_tier: code
+    contributing_personas: [developer, architect]
+    consumes: [integrated-api]
+    produces: [db-config, db-schema]
+    target: db
+    required_runner: cli
+    max_turns: 30
+    timeout_seconds: 1800
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Edit, Glob, Grep, mcp__kb__*]
+
+  # --- A3 (local validation gate after db-wiring) --------------------------
+  - key: local-deployment
+    seq: 3
+    name: Local Deployment
+    agent_group: "Developer Agent"
+    deliverable: >
+      Local validation deployment: Maven build, npm build, security scan,
+      Spring Boot backend launched and health-checked on a free port,
+      Angular SPA served via esbuild, live URLs recorded. Produces a
+      deployment-report artifact as evidence before the test suite runs.
+    owner:
+      kind: plugin
+      plugin: AIDLC-deploy
+      skill: deploy
+    status: changes
+    approval_persona: developer
+    artifact_tier: code
+    contributing_personas: [devops]
+    consumes: [integrated-api, integrated-ui, db-config]
+    produces: [deployment-report]
+    target: none
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Write, Glob, Grep, Bash]
+
+  # --- A4 (was A3) --------------------------------------------------------
+  - key: ui-smoke
+    seq: 4
+    name: UI Smoke Test
+    agent_group: "Testing Agent"
+    deliverable: >
+      Smoke pass over the fully assembled multi-EPIC UI surface. Catches
+      cross-EPIC component interaction regressions that per-EPIC Jasmine
+      suites cannot see.
+    owner:
+      kind: plugin
+      plugin: AIDLC-playwright
+      skill: generate
+    status: changes
+    notes: >
+      Runs Playwright smoke journeys against the fully assembled multi-EPIC UI
+      surface. Uses the same AIDLC-playwright:generate skill as the ui-e2e stage
+      but scoped to critical happy-path flows only. Requires integrated-ui and
+      validation-report from the epic-assemble stage.
+    approval_persona: tester
+    artifact_tier: test
+    contributing_personas: [developer]
+    consumes: [user-story, integrated-ui, validation-report, deployment-report]
+    produces: [assembled-smoke-results]
+    target: tests
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- A5 (was A4) --------------------------------------------------------
+  - key: ui-e2e
+    seq: 5
+    name: UI E2E Test
+    agent_group: "Testing Agent"
+    deliverable: >
+      Playwright end-to-end journeys traced to ALL EPICs' user stories, with
+      trace files and screenshots as UAT evidence. Moved from uw-cr-mini.yaml
+      (was M8/seq 7) so it runs against the complete multi-EPIC UI surface.
+    owner:
+      kind: plugin
+      plugin: AIDLC-playwright
+      skill: generate
+    status: fits
+    notes: >
+      Previously ran per-EPIC in uw-cr-mini.yaml as ui-e2e / seq 7. Same
+      AIDLC-playwright skill reused unchanged; scope widens to all EPICs.
+      Evidence publisher reports any user story with no covering Playwright spec.
+    approval_persona: tester
+    artifact_tier: test
+    contributing_personas: [developer, uat]
+    consumes: [user-story, assembled-smoke-results]
+    produces: [e2e-results, e2e-evidence]
+    target: tests
+    required_runner: cli
+    max_turns: 20
+    timeout_seconds: 1800
+    permissions:
+      policy: accept_edits
+      allow: [Read, Write, Glob, Grep, Bash, mcp__kb__*]
+
+  # --- A6 (was A5) --------------------------------------------------------
+  - key: pr-merge
+    seq: 6
+    name: PR Merge
+    agent_group: "PR Merge Agent"
+    deliverable: >
+      Merges all per-EPIC feature branches into the main branch after E2E
+      sign-off. Opens a single consolidated PR covering all EPICs.
+    owner:
+      kind: external
+    status: changes
+    notes: >
+      Handled by the existing CI/CD harness (Jenkins / GitHub Actions).
+      Requires all A5 e2e-results to be approved before the merge gate opens.
+    approval_persona: devops
+    artifact_tier: release
+    contributing_personas: [architect, developer]
+    consumes: [e2e-results]
+    produces: [merged-branch]
+    target: none
+    required_runner: cli
+    max_turns: 10
+    timeout_seconds: 900
+    permissions:
+      policy: deny_unlisted
+      allow: [Read, Glob, Grep, Bash]

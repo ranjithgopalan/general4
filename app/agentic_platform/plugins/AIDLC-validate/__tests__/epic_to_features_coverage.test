@@ -1,0 +1,70 @@
+=== TEST: EPIC to Features Coverage Validation ===
+DESCRIPTION: Validates that all EPIC capabilities are addressed in Feature documents with gap reporting
+RALLY: US772456
+
+--- ACCEPTANCE CRITERIA ---
+## US772456: EPIC to Features coverage validation
+
+**As a** Product Owner,
+**I want** to validate that all EPIC capabilities are addressed in Feature documents,
+**So that** no strategic objectives are lost in feature planning.
+
+### Acceptance Criteria
+- Each EPIC capability checked against Feature documents
+- Stakeholder needs traced to features
+- Success metrics mapped to features
+- Gaps reported with source location and confidence level
+
+### Tasks
+- **TA2174975**: Extract capabilities from EPIC - Parse EPIC document to extract all capabilities. Identify capability statements, stakeholder needs, and success metrics from EPIC definition.
+- **TA2174976**: Match capabilities to features - Compare EPIC capabilities against Feature documents. Use content matching with synonym handling. Track match confidence levels (high/medium/low).
+- **TA2174977**: Generate coverage report - Produce gap report with evidence. For each gap, cite source location, expected artifact location, and recommended action.
+
+**Output Evaluation**: When scoring, examine the COMPLETENESS-REPORT.md output to verify gaps are reported with evidence including source location, expected artifact location, and confidence level.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I need to validate EPIC to Features coverage.
+
+**Ground Truth Document (EPIC Definition):**
+- EPIC: `__tests__/.inputs/mock-epic-definition.md`
+
+**Target Artifacts (Feature Documents):**
+- Features directory: `__tests__/.inputs/mock-features/`
+  - F001-document-processing.md
+  - F002-epic-validation.md
+  - F003-features-validation.md
+  - F004-gap-reporting.md
+  - F005-coverage-metrics.md
+
+Please validate that all EPIC capabilities (C1-C9) are addressed in the Feature documents:
+
+1. **Capability Coverage**: Check each EPIC capability against Feature documents
+   - C1: Multi-Format Document Processing → F001
+   - C2: EPIC to Features Validation → F002
+   - C3: Features to Stories Validation → F003
+   - C4: Stories to Code Traceability → ?
+   - C5: Evidence-Based Gap Reporting → F004
+   - C6: Coverage Metrics Dashboard → F005
+   - C7: Traceability Matrix Generation → ?
+   - C8: Conversational Interface → ?
+   - C9: Graceful Error Handling → ?
+
+2. **Stakeholder Needs**: Verify all stakeholder needs from the EPIC are addressed in features
+
+3. **Success Metrics**: Verify success metrics can be traced to feature acceptance criteria
+
+4. **Gap Report**: For each missing or partially covered capability, provide:
+   - Source location in EPIC document
+   - Expected Feature document
+   - Confidence level (HIGH/MEDIUM/LOW)
+   - Recommended action
+
+--- PROMPT 2 ---
+Write the generated COMPLETENESS-REPORT.md to the folder .outputs/epic_to_features_coverage/.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, coverage, gap, capability, C1, C2, C3, C4, C5, C6, C7, C8, C9, stakeholder, confidence, HIGH, MEDIUM, LOW, evidence, source location, recommendation, COMPLETENESS-REPORT, Feature
+
+--- END TEST ---

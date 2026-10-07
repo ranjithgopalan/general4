@@ -1,0 +1,26 @@
+=== TEST: Conflict Resolver - Interactive Conflict Resolution ===
+DESCRIPTION: Tests the conflict-resolver skill's ability to detect invocation mode (workflow vs standalone), invoke ambiguity-detector for comprehensive conflict analysis, categorize conflicts by type, present conflicts to users with side-by-side comparison using AskUserQuestion, offer resolution options (Keep A, Keep B, Merge, Custom), and update confirmedSections or BRD.md with resolutions.
+
+--- ACCEPTANCE CRITERIA ---
+**Interactive Conflict Resolution.** Given ambiguity array with conflicts (from ba-brd workflow or standalone BRD.md), when conflict-resolver skill is invoked, then it must: (1) detect invocation mode by checking for .claude/GATHER-business-analyst/conflict-reports/latest-ambiguity-array.json and latest-confirmed-sections.json files, (2) IF WORKFLOW MODE: read context files created by ba-brd Step 5b, (3) IF STANDALONE MODE: ask user for BRD path using AskUserQuestion, (4) invoke ambiguity-detector agent internally for comprehensive conflict analysis, (5) categorize conflicts by type (business rules, requirements, data, process, stakeholders, vague language, missing definitions), (6) for each conflict category: ask user if they want to resolve using AskUserQuestion, (7) for each conflict: present side-by-side comparison with source citations and context, (8) offer resolution options: Keep A, Keep B, Merge both, Custom text input, (9) apply user decision to confirmedSections (workflow mode) or sectionContentMap (standalone mode), (10) maintain audit log of all resolutions, (11) IN STANDALONE MODE: update Section 12 table marking resolved conflicts with "Resolved" status and resolution date, (12) IN STANDALONE MODE: rewrite BRD.md file with updated content.
+
+--- PROMPT ---
+Skill: GATHER-business-analyst:conflict-resolver
+
+Resolve conflicts in the BRD that was just generated.
+
+--- PROMPT 2 ---
+Yes, resolve business rules conflicts
+
+--- PROMPT 3 ---
+Keep B
+
+--- PROMPT 4 ---
+Merge both
+
+--- PROMPT 5 ---
+No, skip stakeholders conflicts
+
+--- EXPECTED KEYWORDS ---
+conflict-resolver, invocation mode detection, workflow mode, standalone mode, .claude/GATHER-business-analyst/conflict-reports, latest-ambiguity-array.json, latest-confirmed-sections.json, AskUserQuestion, BRD path, ambiguity-detector, comprehensive analysis, conflict categorization, business rules, requirements, data, process, stakeholders, vague language, missing definitions, side-by-side comparison, source citations, context, resolution options, Keep A, Keep B, Merge both, Custom, user decision, confirmedSections, sectionContentMap, audit log, Section 12, Resolved status, resolution date, rewrite BRD.md
+--- END TEST ---

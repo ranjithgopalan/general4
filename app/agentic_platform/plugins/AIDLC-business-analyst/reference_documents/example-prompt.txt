@@ -1,0 +1,110 @@
+Create for me a BRD with the following information:
+
+the part of the workflow that i'm wokring on is the commssion
+
+here: /Users/christopher.le/Desktop/Screenshot 2026-01-28 at 9.00.14 AM.png
+
+I need to create the producer commission BRD.
+
+The policy data structure POM is as follows:
+
+**POM Structure:**
+```typescript
+interface PolicyObjectModel {
+  policy: {
+    policyNumber: string;
+    effectiveDate: Date;
+    expirationDate: Date;
+    status: 'active' | 'pending' | 'expired' | 'cancelled';
+    premium: {
+      annualAmount: number;
+      paymentFrequency: 'monthly' | 'quarterly' | 'semi-annual' | 'annual';
+      nextPaymentDate: Date;
+      nextPaymentAmount: number;
+    };
+  };
+  policyholder: {
+    personalInfo: {
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      dateOfBirth: Date;
+      ssn: string;
+    };
+    contactInfo: {
+      email: string;
+      primaryPhone: string;
+      secondaryPhone?: string;
+      address: {
+        street1: string;
+        street2?: string;
+        city: string;
+        state: string;
+        zipCode: string;
+        country: string;
+      };
+    };
+  };
+  coverage: {
+    type: 'auto' | 'home' | 'life' | 'health';
+    limits: {
+      bodilyInjury: number;
+      propertyDamage: number;
+      uninsuredMotorist: number;
+      medicalPayments: number;
+    };
+    deductibles: {
+      collision: number;
+      comprehensive: number;
+    };
+    additionalCoverages: {
+      rentalReimbursement: boolean;
+      roadsideAssistance: boolean;
+      glassDeductibleWaiver: boolean;
+    };
+  };
+  vehicle: {
+    identification: {
+      vin: string;
+      licensePlate: string;
+      registrationState: string;
+    };
+    details: {
+      year: number;
+      make: string;
+      model: string;
+      trim: string;
+      bodyType: string;
+    };
+    usage: {
+      annualMileage: number;
+      primaryUse: 'commute' | 'business' | 'pleasure';
+      garagingAddress: Address;
+    };
+  };
+}
+```
+
+and here's how it is supposed to work:
+
+
+And go so commission is the ability for our booking system to capture the commission amount and percentage relevant for
+that booking. This is captured at this specific step in the image of the overall new business booking producer
+commission is first defined when we define the producer for a particular transaction in a particular transaction. You
+could have one or two producers being maximum and each producer will have a commission defined and the commission could
+either be a person a percentage or it could be a amount example producer 15% commission producer has 10% commission in
+total AI needs to pay 25% commission to produce producers commission in new business. We need to define we need to enter
+the premium information we need to find the taxes and fees in previous steps, and then only after capturing that we can
+now allocate the commission of the two producers to the product structure the policy object more than attached will tell
+you what the product structure is the product structure consists of a product per transaction, each product elect
+transaction one transaction a brother could have multiple locations a location, multiple section. Multiple risk risk
+risk could have multiple coverages premiums are entered at coverage level and the system needs to automatically summit
+up at the upper level so that we can get the policy level premium taxes and fees are also defined a coverage level
+calculate the coverage level and the tax amounts up at the higher level this is just some background information so that
+you can understand commission now once you have the premium once you have taxes once you have peace you calculate for
+commission commission is calculated tax commission is calculated tax so if you have two producers producer needs to have
+their corresponding commission and the commission is calculated and a coverage level and same with premium and it’s up
+at parent level so that you can get the overall level commission and here’s an example so you have to producers 15% and
+the other 10% if the premium at coverage one is €100 producer one will have €15 producer two will have €10 and if
+producer €200 as well calculation applies producer one sum up producer one with now have €30 euros producer will have
+€20 examples also have attached that’s it. That’s the commission got it.

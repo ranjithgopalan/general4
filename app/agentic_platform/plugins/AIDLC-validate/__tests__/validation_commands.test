@@ -1,0 +1,48 @@
+=== TEST: Conversational Validation Interface Commands ===
+DESCRIPTION: Validates that /validate-requirements and /check-coverage commands work with natural language input
+RALLY: US772462
+
+--- ACCEPTANCE CRITERIA ---
+## US772462: Conversational validation interface
+
+**As a** user,
+**I want** to specify validation scope through natural language,
+**So that** I can easily target specific validation scenarios.
+
+### Acceptance Criteria
+- /validate-requirements command launches validation workflow
+- /check-coverage command provides quick coverage summary
+- Agent prompts for ground truth and artifact paths
+- Explicit mapping supported when automatic correlation fails
+
+### Tasks
+- **TA2174991**: Implement /validate-requirements command - Create main validation entry point. Prompt for validation type (BRD->EPIC, PRD->Features, etc.), ground truth path, and artifact path.
+- **TA2174992**: Implement /check-coverage command - Create quick coverage check command. Run lightweight coverage calculation and display summary without full gap report.
+
+**Output Evaluation**: When scoring, verify the command successfully launches the validation workflow, prompts appropriately for inputs, and handles natural language scope specification.
+
+--- PROMPT ---
+/GATHER-validate:requirements
+
+I want to validate EPIC to Features coverage.
+
+Here are the document paths:
+
+**Ground Truth (EPIC):** `__tests__/.inputs/mock-epic-definition.md`
+
+**Target Artifacts (Features):** `__tests__/.inputs/mock-features/`
+
+Please validate coverage and provide a summary.
+
+--- PROMPT 2 ---
+Now I need a quick coverage check. Using the same documents:
+- EPIC: `__tests__/.inputs/mock-epic-definition.md`
+- Features: `__tests__/.inputs/mock-features/`
+- Stories: `__tests__/.inputs/mock-user-stories.md`
+
+Provide just the high-level coverage percentages and gap counts without the full detailed report. Format as a quick summary suitable for a status update.
+
+--- EXPECTED KEYWORDS ---
+GATHER-validate, requirements, validate, coverage, EPIC, Features, ground truth, artifact, workflow, summary, percentage, gap count, quick check
+
+--- END TEST ---

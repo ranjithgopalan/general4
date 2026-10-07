@@ -1,0 +1,22 @@
+{
+  "name": "AIDLC-scrum-master",
+  "description": "Rally API integration with SAFe portfolio hierarchy management, natural language queries, sprint planning, and automated team workflows with auto-setup detection",
+  "version": "1.1.1",
+  "author": {
+    "name": "AIG AI COE Tech Mod Team"
+  },
+  "keywords": [
+    "rally",
+    "agile",
+    "scrum",
+    "safe",
+    "sprint",
+    "portfolio",
+    "jira",
+    "project-management"
+  ],
+  "skills": [
+    "./skills/rally",
+    "./skills/setup"
+  ]
+}

@@ -1,0 +1,244 @@
+<div class="apm">
+  <!-- ── dark left sidebar: project tree ── -->
+  <aside class="apm-side">
+    <div class="apm-brand"><span class="apm-mark">AI</span><span>AIDLC Platform Management</span></div>
+
+    <nav class="apm-nav">
+      <a [class.on]="isGlobalLibrary()" (click)="goGlobalLibrary()">Global Library</a>
+      <a [class.on]="!store.selectedProjectId() && !isGlobalLibrary()" (click)="goDashboard()">Workspace</a>
+    </nav>
+
+    <!-- project scope (only when a project is selected) -->
+    <div class="apm-scope" *ngIf="store.selectedProject() as project">
+      <div class="apm-scope-head">
+        <span class="apm-scope-name" [title]="project.kb_application_id">{{ project.name }}</span>
+        <button class="apm-link" (click)="goDashboard()">change</button>
+      </div>
+
+      <a class="apm-pipeline on" (click)="openPipelineSummary()">
+        <span class="apm-pipeline-icon">⚙</span> Pipeline summary
+      </a>
+      <a class="apm-pipeline" (click)="openKnowledgeOntology()">
+        <span class="apm-pipeline-icon">📚</span> Knowledge &amp; Ontology
+      </a>
+      <a class="apm-pipeline" (click)="openAspDependencies()" title="The project's ASP files on the Gear ID's dependency graph, with their library cards">
+        <span class="apm-pipeline-icon">🕸</span> ASP dependencies
+      </a>
+
+      <!-- Global Workspace — Business Analyst stages always visible (PRD, FRD).
+           Per-EPIC stages (Feature/User Story/Coverage) are excluded here and
+           shown under each EPIC workspace instead. -->
+      <ng-container *ngIf="store.globalWorkspace() as g">
+        <button class="apm-ws" [class.on]="g.id === store.selectedId()" (click)="openWorkspace(g.id)">
+          <span>Global Workspace</span>
+          <span class="apm-ws-meta" *ngIf="g.progress as pr">{{ pr.completed }}/{{ pr.stages }}</span>
+          <span class="apm-ws-id-row">{{ g.id }}</span>
+        </button>
+        <ng-container *ngFor="let group of agentGroupsFor(globalSidebarStages(), ['Business Analyst Agent'])">
+          <div class="apm-agent-group">{{ group.label }}</div>
+          <button class="apm-stage" *ngFor="let s of group.stages"
+                  [class.on]="s.key === store.selectedStageKey()"
+                  [title]="s.deliverable" (click)="selectGlobalStage(s.key)">
+            <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+            <span class="apm-seq">{{ s.seq }}</span>
+            <span class="apm-sname">{{ s.name }}</span>
+            <span class="apm-ws-badge tier-global">global<span class="apm-ws-fullid">{{ g.id }}</span></span>
+          </button>
+        </ng-container>
+      </ng-container>
+
+      <!-- Architecture Workspace — stages expand when selected -->
+      <ng-container *ngIf="store.architectureWorkspace() as a">
+        <button class="apm-ws" [class.on]="a.id === store.selectedId()" (click)="openWorkspace(a.id)">
+          <span><strong>Architecture Workspace</strong></span>
+          <span class="apm-ws-meta" *ngIf="a.progress as pr">{{ pr.completed }}/{{ pr.stages }}</span>
+          <span class="apm-ws-id-row">{{ a.id }}</span>
+        </button>
+        <ng-container *ngIf="a.id === store.selectedId()">
+          <ng-container *ngFor="let group of agentGroups(store.stages())">
+            <div class="apm-agent-group">{{ group.label }}</div>
+            <button class="apm-stage" *ngFor="let s of group.stages"
+                    [class.on]="s.key === store.selectedStageKey()"
+                    [title]="s.deliverable" (click)="selectStage(s.key)">
+              <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+              <span class="apm-seq">{{ s.seq }}</span>
+              <span class="apm-sname">{{ s.name }}</span>
+              <span class="apm-ws-badge tier-arch">arch<span class="apm-ws-fullid">{{ a.id }}</span></span>
+            </button>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <!-- Scrum Master Agent — global workspace, EPIC Set only.
+           Feature / User Story are per-EPIC global stages shown under each EPIC. -->
+      <ng-container *ngIf="store.globalWorkspace() as g">
+        <button class="apm-ws" [class.on]="g.id === store.selectedId()" (click)="openWorkspace(g.id)">
+          <span>Scrum Master Agent</span>
+          <span class="apm-ws-meta">global</span>
+        </button>
+        <ng-container *ngFor="let group of agentGroupsFor(globalSidebarStages(), ['Scrum Master Agent'])">
+          <button class="apm-stage" *ngFor="let s of group.stages"
+                  [class.on]="s.key === store.selectedStageKey()"
+                  [title]="s.deliverable" (click)="selectGlobalStage(s.key)">
+            <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+            <span class="apm-seq">{{ s.seq }}</span>
+            <span class="apm-sname">{{ s.name }}</span>
+            <span class="apm-ws-badge tier-global">global<span class="apm-ws-fullid">{{ g.id }}</span></span>
+          </button>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngIf="perEpicWorkspaces().length">
+        <div class="apm-group"><strong>Per-EPIC Workspaces</strong></div>
+        <ng-container *ngFor="let w of perEpicWorkspaces()">
+          <button class="apm-ws nested" [class.on]="w.id === store.selectedId()" (click)="openWorkspace(w.id)">
+            <span><strong>{{ w.epic_id }}{{ w.epic_title ? ' — ' + w.epic_title : '' }}</strong></span>
+            <span class="apm-ws-meta" *ngIf="w.progress as pr">{{ pr.completed }}/{{ pr.stages }}</span>
+            <span class="apm-ws-id-row">{{ w.id }}</span>
+          </button>
+          <ng-container *ngIf="w.id === store.selectedId()">
+            <!-- Per-EPIC global stages: Feature, User Story, Coverage.
+                 These run inside the global LangGraph thread (Bedrock) scoped to
+                 this EPIC's workspace. Clicking opens THIS epic's pipeline board
+                 (not the global one) so context stays within the EPIC. -->
+            <ng-container *ngFor="let group of agentGroupsFor(perEpicStages(), ['Scrum Master Agent', 'Business Analyst Agent'])">
+              <div class="apm-agent-group deep">{{ group.label }}</div>
+              <button class="apm-stage deep" *ngFor="let s of group.stages; let i = index"
+                      [class.on]="s.key === store.selectedStageKey()"
+                      [title]="s.deliverable" (click)="selectMiniEpicStage(w.id, s.key)">
+                <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+                <span class="apm-seq">{{ i + 1 }}</span>
+                <span class="apm-sname">{{ s.name }}</span>
+                <span class="apm-ws-badge tier-global">global
+                  <span class="apm-ws-fullid">{{ store.globalWorkspace()?.id ?? '' }}</span>
+                </span>
+              </button>
+            </ng-container>
+            <!-- Mini workspace stages: LLD onwards.
+                 ui-e2e-testing is excluded here — it runs cross-EPIC in the EPIC Assembler
+                 Testing Agent block instead. "Tester Agent" group label is overridden to
+                 "Unit Test Agent" via displayGroupLabel(). -->
+            <ng-container *ngFor="let group of agentGroups(miniStagesFiltered())">
+              <div class="apm-agent-group deep">{{ displayGroupLabel(group.label) }}</div>
+              <button class="apm-stage deep" *ngFor="let s of group.stages"
+                      [class.on]="s.key === store.selectedStageKey()"
+                      [title]="s.deliverable" (click)="selectStage(s.key)">
+                <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+                <span class="apm-seq">{{ s.seq }}</span>
+                <span class="apm-sname">{{ displayStageName(s) }}</span>
+                <span class="apm-ws-badge tier-epic">{{ w.epic_id }}
+                  <span class="apm-ws-fullid">{{ w.id }}</span>
+                </span>
+              </button>
+            </ng-container>
+          </ng-container>
+          <!-- Traceability — per EPIC, navigates to the 6-tab traceability view -->
+          <button class="apm-traceability nested" (click)="openTraceability(w.id)" title="View full traceability for {{ w.id }}">
+            <span class="apm-traceability-icon">↺</span>
+            <span class="apm-traceability-label">Traceability</span>
+            <span class="apm-traceability-epic">{{ w.epic_id }}</span>
+          </button>
+        </ng-container>
+
+        <!-- EPIC Assembler Workspace — live once backend creates it after all EPICs complete -->
+        <div class="apm-group apm-group--section">Epic Assembler</div>
+        <ng-container *ngIf="store.assemblerWorkspace() as asm; else assemblerPlaceholder">
+          <!-- Live workspace button — clickable once the backend has created the workspace -->
+          <button class="apm-ws apm-ws--assembler"
+                  [class.on]="asm.id === store.selectedId()"
+                  (click)="openWorkspace(asm.id)">
+            <span>EPIC Assembler Workspace</span>
+            <span class="apm-ws-meta" *ngIf="asm.progress as pr">{{ pr.completed }}/{{ pr.stages }}</span>
+            <span class="apm-ws-meta" *ngIf="!asm.progress">ready</span>
+          </button>
+          <!-- Dynamic stage rows — rendered when the assembler workspace is selected -->
+          <ng-container *ngIf="asm.id === store.selectedId()">
+            <ng-container *ngFor="let group of agentGroups(assemblerSidebarStages())">
+              <div class="apm-agent-group">{{ displayGroupLabel(group.label) }}</div>
+              <button class="apm-stage"
+                      *ngFor="let s of group.stages"
+                      [class.on]="s.key === store.selectedStageKey()"
+                      (click)="selectMiniEpicStage(asm.id, s.key)">
+                <span class="apm-dot" [ngClass]="tone(s)">{{ dot(s) }}</span>
+                <span class="apm-seq">{{ s.seq }}</span>
+                <span class="apm-sname">{{ s.name }}</span>
+              </button>
+            </ng-container>
+          </ng-container>
+          <!-- Traceability — always visible once assembler workspace exists -->
+          <button class="apm-traceability nested"
+                  (click)="openTraceability(asm.id)"
+                  title="View full traceability for EPIC Assembler">
+            <span class="apm-traceability-icon">↺</span>
+            <span class="apm-traceability-label">Traceability</span>
+            <span class="apm-traceability-epic">Assembler</span>
+          </button>
+        </ng-container>
+
+        <!-- Placeholder shown until the backend creates the assembler workspace -->
+        <ng-template #assemblerPlaceholder>
+          <button class="apm-ws apm-ws--assembler" (click)="openEpicAssemblerWs()">
+            <span>EPIC Assembler Workspace</span>
+            <span class="apm-ws-meta">pending</span>
+          </button>
+          <div class="apm-agent-group apm-agent-group--assembler">EPIC Assembler Agent</div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">EPIC Assembly &amp; Integration</span>
+          </div>
+          <div class="apm-agent-group">Developer Agent</div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">DB Integration</span>
+          </div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">Local Deployment</span>
+          </div>
+          <div class="apm-agent-group">Testing Agent</div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">UI Smoke Test</span>
+          </div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">UI E2E Test</span>
+          </div>
+          <div class="apm-agent-group">PR Merge Agent</div>
+          <div class="apm-stage apm-stage--future">
+            <span class="apm-dot idle">○</span>
+            <span class="apm-seq"></span>
+            <span class="apm-sname">PR Merge</span>
+          </div>
+          <!-- Traceability — disabled until the assembler workspace is created -->
+          <div class="apm-traceability nested apm-traceability--disabled"
+               title="Available once EPIC Assembler workspace is created">
+            <span class="apm-traceability-icon">↺</span>
+            <span class="apm-traceability-label">Traceability</span>
+            <span class="apm-traceability-epic">pending</span>
+          </div>
+        </ng-template>
+      </ng-container>
+    </div>
+
+    <div class="apm-foot" *ngIf="store.principal() as p">
+      {{ p.personas?.length || 0 }} personas · {{ p.can_see_code ? 'Hybrid' : 'Global' }}
+      <span *ngIf="p.auth_mode === 'disabled'">· auth off</span>
+    </div>
+
+    <div class="apm-userbox">
+      <span class="apm-avatar">{{ (store.principal()?.email || 'U')[0] | uppercase }}</span>
+      <div class="apm-who"><small>Signed in as</small><b>{{ store.principal()?.email || 'you@aig.com' }}</b></div>
+    </div>
+  </aside>
+
+  <!-- ── main content ── -->
+  <main class="apm-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>
